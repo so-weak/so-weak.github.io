@@ -1350,7 +1350,7 @@
 }
 
 [data-theme='editorial'] .ed-projfeat__points li::before {
-  content: '✳';
+  content: '✦';
   position: absolute;
   left: 0;
   top: 7px;
@@ -1509,7 +1509,7 @@
 }
 
 [data-theme='editorial'] .ed-row__points li::before {
-  content: '✳';
+  content: '✦';
   position: absolute;
   left: 0;
   top: 5px;

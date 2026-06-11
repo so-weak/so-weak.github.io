@@ -249,7 +249,7 @@ function cover(content: SiteContent, city: string): string {
 
       <h1 class="ed-cover__title ed-lines" aria-label="${esc(identity.firstName)} ${esc(identity.lastName)}">
         <span class="ed-line" aria-hidden="true"><span class="ed-line__in" style="--i:0">${kanaName(identity.firstName.toUpperCase(), KANA_FIRST)}</span></span>
-        <span class="ed-line ed-line--italic" aria-hidden="true"><span class="ed-line__in" style="--i:1">${kanaName(identity.lastName, KANA_LAST)}<span class="ed-verm ed-cover__star"> ✳</span></span></span>
+        <span class="ed-line ed-line--italic" aria-hidden="true"><span class="ed-line__in" style="--i:1">${kanaName(identity.lastName, KANA_LAST)}<span class="ed-verm ed-cover__star"> ✦</span></span></span>
       </h1>
 
       <div class="ed-cover__deckwrap ed-reveal" style="--i:2">
@@ -269,7 +269,7 @@ function cover(content: SiteContent, city: string): string {
         </button>
       </aside>
 
-      <span class="ed-ding ed-ding--cover" data-speed="0.72" aria-hidden="true">✳</span>
+      <span class="ed-ding ed-ding--cover" data-speed="0.72" aria-hidden="true">✦</span>
 
       <div class="ed-cover__stats ed-reveal" style="--i:3">
         <span class="ed-cover__statshead">In numbers&thinsp;—</span>
@@ -292,7 +292,7 @@ function marquee(content: SiteContent, city: string): string {
     'PRODUCTION-GRADE',
     'SHIPS DAILY',
   ]
-  const line = bits.map((b) => `${esc(b)}&ensp;✳&ensp;`).join('')
+  const line = bits.map((b) => `${esc(b)}&ensp;✦&ensp;`).join('')
   const half = `<span>${line.repeat(3)}</span>`
   return `
     <div class="ed-marquee" aria-hidden="true">
@@ -406,7 +406,7 @@ function experience(content: SiteContent): string {
           (h, j) => `
             <div class="ed-pullwrap" data-speed="${j % 2 === 0 ? '0.95' : '1.06'}">
               <blockquote class="ed-pull ed-reveal" style="--i:${j}">
-                <span class="ed-pull__mark" aria-hidden="true">✳</span>
+                <span class="ed-pull__mark" aria-hidden="true">✦</span>
                 <p>${esc(h)}</p>
               </blockquote>
             </div>`,
@@ -596,7 +596,7 @@ function awards(content: SiteContent): string {
     .map(
       (a, i) => `
         <li class="ed-laurel" style="--i:${i}">
-          <span class="ed-laurel__mark" aria-hidden="true">✳</span>
+          <span class="ed-laurel__mark" aria-hidden="true">✦</span>
           <p>${esc(a)}</p>
         </li>`,
     )
@@ -629,7 +629,7 @@ function awards(content: SiteContent): string {
           <ul class="ed-edu">${edu}</ul>
         </aside>
       </div>
-      <span class="ed-ding ed-ding--awards" data-speed="1.18" aria-hidden="true">✳</span>
+      <span class="ed-ding ed-ding--awards" data-speed="1.18" aria-hidden="true">✦</span>
     </section>
   `
 }
