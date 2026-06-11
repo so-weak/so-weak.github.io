@@ -1,0 +1,253 @@
+/* ==========================================================================
+   base.css — reset, design tokens, mount-point layering, a11y defaults.
+   Theme-specific styling lives in each theme's styles.css, scoped to
+   [data-theme='<id>']. Nothing here should fight a theme.
+   ========================================================================== */
+
+/* --- tokens --------------------------------------------------------------- */
+
+:root {
+  /* z-layers (mount-point stack — keep in sync with index.html comment) */
+  --z-gl: 0;
+  --z-theme: 1;
+  --z-ui-global: 100;
+  --z-transition: 150;
+  --z-cursor: 200;
+  --z-preloader: 300;
+
+  /* easings */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-cubic: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* durations */
+  --dur-fast: 150ms;
+  --dur-base: 300ms;
+  --dur-slow: 550ms;
+  --dur-reveal: 900ms;
+
+  /* fluid type scale — minor third-ish, 360px → 1440px viewport */
+  --step--1: clamp(0.75rem, 0.72rem + 0.15vw, 0.85rem);
+  --step-0: clamp(0.95rem, 0.9rem + 0.25vw, 1.125rem);
+  --step-1: clamp(1.2rem, 1.1rem + 0.5vw, 1.5rem);
+  --step-2: clamp(1.5rem, 1.3rem + 0.9vw, 2.1rem);
+  --step-3: clamp(1.9rem, 1.5rem + 1.7vw, 3rem);
+  --step-4: clamp(2.4rem, 1.8rem + 3vw, 4.4rem);
+  --step-5: clamp(3rem, 2rem + 5.2vw, 6.5rem);
+
+  /* neutral palette for chrome that must sit on any theme */
+  --ink: #0a0a0c;
+  --paper: #e8e8ec;
+  --accent: #5cf2c4;
+}
+
+/* --- reset ----------------------------------------------------------------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scrollbar-gutter: stable;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Archivo Variable', system-ui, -apple-system, sans-serif;
+  font-size: var(--step-0);
+  line-height: 1.5;
+  background: var(--ink);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+svg,
+canvas,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* Lenis recommendation: the html element hosts the smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* --- mount-point layering --------------------------------------------------- */
+
+#gl-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-gl);
+}
+
+#theme-root {
+  position: relative;
+  z-index: var(--z-theme);
+  min-height: 100vh;
+  outline: none; /* receives programmatic focus on theme switch */
+}
+
+#ui-global {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-ui-global);
+  pointer-events: none; /* children opt back in */
+}
+
+#ui-global > * {
+  pointer-events: auto;
+}
+
+#transition-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--z-transition);
+  display: none; /* TransitionOverlay toggles this */
+  pointer-events: none;
+}
+
+#cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--z-cursor);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) ease;
+}
+
+#cursor.is-active {
+  opacity: 1;
+}
+
+#cursor .cursor-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px; /* center on the tracked point */
+  border-radius: 50%;
+  background: #fff;
+  mix-blend-mode: difference;
+  transition:
+    transform var(--dur-base) var(--ease-out-back),
+    opacity var(--dur-fast) ease;
+}
+
+#cursor[data-mode='hover'] .cursor-dot {
+  transform: scale(2.4);
+}
+
+#cursor[data-mode='hidden'] .cursor-dot {
+  opacity: 0;
+}
+
+#preloader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-preloader);
+}
+
+/* --- selection / focus / scrollbar ------------------------------------------ */
+
+::selection {
+  background: var(--accent);
+  color: var(--ink);
+}
+
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--paper) 25%, transparent) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* --- utilities --------------------------------------------------------------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

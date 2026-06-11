@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>// sg-stats</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111;
+    --border: #222;
+    --accent: #f0b429;
+    --dim: #555;
+    --text: #e0e0e0;
+    --green: #4ade80;
+    --red: #f87171;
+    font-size: 14px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; min-height: 100dvh; display: flex; align-items: center; justify-content: center; }
+  .screen { width: 100%; max-width: 480px; padding: 24px; }
+  .screen--wide { max-width: 860px; }
+  h1 { font-size: 13px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 28px; }
+  label { display: block; font-size: 11px; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 6px; margin-top: 16px; }
+  input { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; font-family: inherit; font-size: 13px; outline: none; border-radius: 4px; }
+  input:focus { border-color: var(--accent); }
+  button { margin-top: 20px; width: 100%; background: var(--accent); color: #000; border: none; padding: 11px; font-family: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; border-radius: 4px; }
+  button:hover { opacity: 0.85; }
+  .err { font-size: 11px; color: var(--red); margin-top: 8px; min-height: 16px; }
+  pre { background: #0d1117; border: 1px solid var(--border); padding: 14px; font-size: 11px; overflow-x: auto; border-radius: 4px; line-height: 1.6; color: #8b949e; }
+  .hint { font-size: 11px; color: var(--dim); line-height: 1.6; margin-top: 10px; }
+  .hint a { color: var(--accent); }
+  /* dashboard */
+  .header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 28px; }
+  .header h1 { margin-bottom: 0; }
+  .header-actions { display: flex; gap: 12px; }
+  .btn-sm { background: transparent; border: 1px solid var(--border); color: var(--dim); padding: 5px 10px; font-family: inherit; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 3px; }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 28px; }
+  .card { background: var(--surface); border: 1px solid var(--border); padding: 18px 20px; border-radius: 6px; }
+  .card__label { font-size: 10px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+  .card__value { font-size: 32px; color: var(--accent); font-weight: 700; line-height: 1; }
+  .card__sub { font-size: 10px; color: var(--dim); margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { text-align: left; color: var(--dim); letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 8px; font-weight: 400; }
+  td { padding: 8px 0; border-bottom: 1px solid #1a1a1a; color: var(--text); vertical-align: top; }
+  td:first-child { color: var(--accent); width: 140px; }
+  td:nth-child(2) { color: var(--dim); }
+  td:nth-child(3) { color: var(--dim); width: 180px; }
+  .tag { display: inline-block; background: #1a1a1a; border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; font-size: 10px; color: var(--green); }
+  .tag--cv { color: var(--accent); }
+  .loading { color: var(--dim); font-size: 12px; text-align: center; padding: 40px; }
+  .section-title { font-size: 10px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(async () => {
+
+// ── constants ──────────────────────────────────────────────────────────────────
+// SHA-256("soweak") — change this if you want a different PIN.
+// To generate a new hash: python3 -c "import hashlib; print(hashlib.sha256(b'yourpin').hexdigest())"
+const PIN_HASH = 'ca1ac9cbb74dbd8ff31a696038418d718a874213af07edb68bad417747c57531'
+
+const LS_URL = 'sg_sb_url'
+const LS_KEY = 'sg_sb_key'
+const LS_PIN = 'sg_pin_ok'
+
+const root = document.getElementById('root')
+
+// ── utils ──────────────────────────────────────────────────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str))
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function html(strings, ...values) {
+  return strings.reduce((acc, str, i) => acc + str + (values[i] !== undefined ? values[i] : ''), '')
+}
+
+function sbHeaders(key) {
+  return { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` }
+}
+
+async function fetchStats(url, key) {
+  const base = `${url}/rest/v1/sg_events`
+  const [totalRes, cvRes, recentRes] = await Promise.all([
+    fetch(`${base}?select=count`, { headers: { ...sbHeaders(key), Prefer: 'count=exact', Range: '0-0' } }),
+    fetch(`${base}?event=eq.cv_download&select=count`, { headers: { ...sbHeaders(key), Prefer: 'count=exact', Range: '0-0' } }),
+    fetch(`${base}?order=ts.desc&limit=50&select=event,path,referrer,ts,meta`, { headers: sbHeaders(key) }),
+  ])
+  const total = parseInt(totalRes.headers.get('Content-Range')?.split('/')[1] ?? '0', 10)
+  const cv = parseInt(cvRes.headers.get('Content-Range')?.split('/')[1] ?? '0', 10)
+  const recent = await recentRes.json()
+  return { total, cv, recent }
+}
+
+// ── screens ───────────────────────────────────────────────────────────────────
+function renderPin() {
+  root.innerHTML = html`
+    <div class="screen">
+      <h1>// sg-stats</h1>
+      <label for="pin">Enter PIN</label>
+      <input type="password" id="pin" autocomplete="current-password" placeholder="••••••">
+      <button id="pin-btn">Unlock</button>
+      <p class="err" id="pin-err"></p>
+    </div>`
+  const pinInput = document.getElementById('pin')
+  const pinBtn = document.getElementById('pin-btn')
+  const pinErr = document.getElementById('pin-err')
+  async function attempt() {
+    const hash = await sha256(pinInput.value.trim())
+    if (hash === PIN_HASH) {
+      sessionStorage.setItem(LS_PIN, '1')
+      renderNext()
+    } else {
+      pinErr.textContent = 'incorrect PIN'
+      pinInput.value = ''
+      pinInput.focus()
+    }
+  }
+  pinBtn.addEventListener('click', attempt)
+  pinInput.addEventListener('keydown', e => { if (e.key === 'Enter') attempt() })
+  pinInput.focus()
+}
+
+function renderSetup() {
+  root.innerHTML = html`
+    <div class="screen">
+      <h1>// supabase setup</h1>
+      <p class="hint">Create a free project at <a href="https://supabase.com" target="_blank">supabase.com</a>, run this SQL in the SQL Editor, then paste your credentials below.</p>
+      <pre>CREATE TABLE sg_events (
+  id BIGSERIAL PRIMARY KEY,
+  event TEXT NOT NULL,
+  path TEXT,
+  referrer TEXT,
+  meta JSONB DEFAULT '{}',
+  ts TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE sg_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "anon_insert" ON sg_events
+  FOR INSERT TO anon WITH CHECK (true);
+CREATE POLICY "anon_select" ON sg_events
+  FOR SELECT TO anon USING (true);</pre>
+      <p class="hint" style="margin-top:14px">Also add to your hosting platform's env vars:<br>
+        <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code></p>
+      <label for="sb-url">Project URL</label>
+      <input type="url" id="sb-url" placeholder="https://xxxx.supabase.co">
+      <label for="sb-key">Anon (public) key</label>
+      <input type="text" id="sb-key" placeholder="eyJ...">
+      <button id="setup-btn">Save &amp; View Stats</button>
+      <p class="err" id="setup-err"></p>
+    </div>`
+  const urlInput = document.getElementById('sb-url')
+  const keyInput = document.getElementById('sb-key')
+  const setupBtn = document.getElementById('setup-btn')
+  const setupErr = document.getElementById('setup-err')
+  setupBtn.addEventListener('click', async () => {
+    const url = urlInput.value.trim().replace(/\/$/, '')
+    const key = keyInput.value.trim()
+    if (!url || !key) { setupErr.textContent = 'both fields required'; return }
+    setupErr.textContent = 'connecting...'
+    try {
+      const r = await fetch(`${url}/rest/v1/sg_events?limit=1`, { headers: sbHeaders(key) })
+      if (!r.ok) throw new Error(`${r.status}`)
+      localStorage.setItem(LS_URL, url)
+      localStorage.setItem(LS_KEY, key)
+      renderDashboard(url, key)
+    } catch (e) {
+      setupErr.textContent = `connection failed: ${e.message}. Check URL and key.`
+    }
+  })
+}
+
+function renderDashboard(url, key) {
+  root.innerHTML = html`
+    <div class="screen screen--wide">
+      <div class="header">
+        <h1>// sg-stats</h1>
+        <div class="header-actions">
+          <button class="btn-sm" id="refresh-btn">Refresh</button>
+          <button class="btn-sm" id="reset-btn">Reset creds</button>
+        </div>
+      </div>
+      <div class="cards" id="cards"><p class="loading">loading...</p></div>
+      <p class="section-title">Recent events</p>
+      <div id="events-table"><p class="loading">loading...</p></div>
+    </div>`
+
+  document.getElementById('refresh-btn').addEventListener('click', () => loadData())
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (confirm('Clear saved credentials?')) {
+      localStorage.removeItem(LS_URL)
+      localStorage.removeItem(LS_KEY)
+      renderSetup()
+    }
+  })
+
+  async function loadData() {
+    const cardsEl = document.getElementById('cards')
+    const tableEl = document.getElementById('events-table')
+    try {
+      const { total, cv, recent } = await fetchStats(url, key)
+      cardsEl.innerHTML = html`
+        <div class="card"><p class="card__label">Page Views</p><p class="card__value">${total}</p></div>
+        <div class="card"><p class="card__label">CV Downloads</p><p class="card__value">${cv}</p></div>
+        <div class="card"><p class="card__label">Other</p><p class="card__value">${total - cv}</p><p class="card__sub">non-download events</p></div>`
+      const rows = recent.map(e => {
+        const tag = e.event === 'cv_download' ? '<span class="tag tag--cv">cv_dl</span>' : '<span class="tag">view</span>'
+        const ts = new Date(e.ts).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })
+        const ref = e.referrer ? new URL(e.referrer).hostname : '—'
+        return html`<tr><td>${tag} ${e.event}</td><td>${e.path ?? ''}</td><td>${ref} · ${ts}</td></tr>`
+      }).join('')
+      tableEl.innerHTML = html`<table><thead><tr><th>Event</th><th>Path</th><th>Referrer · Time</th></tr></thead><tbody>${rows}</tbody></table>`
+    } catch (e) {
+      cardsEl.innerHTML = `<p class="err" style="padding:0">fetch error: ${e.message}</p>`
+      tableEl.innerHTML = ''
+    }
+  }
+  loadData()
+}
+
+// ── boot ───────────────────────────────────────────────────────────────────────
+function renderNext() {
+  const url = localStorage.getItem(LS_URL)
+  const key = localStorage.getItem(LS_KEY)
+  if (url && key) renderDashboard(url, key)
+  else renderSetup()
+}
+
+if (sessionStorage.getItem(LS_PIN) === '1') renderNext()
+else renderPin()
+
+})()
+</script>
+</body>
+</html>

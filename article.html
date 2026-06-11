@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Designing RAG that refuses to hallucinate — Soubhik Ghosh</title>
+    <meta
+      name="description"
+      content="How I designed RAG-as-a-Service at HDFC Bank: hybrid FAISS + BM25 retrieval, Cohere/BGE reranking, grounding contracts, refusal paths, and the evaluation loop that cut hallucinations 40–60% across five production systems."
+    />
+    <meta name="author" content="Soubhik Ghosh" />
+    <meta name="theme-color" content="#0a0a0c" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="Designing RAG that refuses to hallucinate" />
+    <meta
+      property="og:description"
+      content="Hybrid retrieval, reranking, grounding contracts, refusal paths, and the evaluation loop that cut hallucinations 40–60% across five production RAG systems in a bank."
+    />
+    <meta property="og:url" content="/article.html" />
+    <meta property="og:site_name" content="Soubhik Ghosh" />
+    <meta property="article:author" content="Soubhik Ghosh" />
+    <meta property="article:published_time" content="2026-06-11" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Designing RAG that refuses to hallucinate" />
+    <meta
+      name="twitter:description"
+      content="Hybrid FAISS + BM25 retrieval, reranking, grounding contracts, refusal paths — production lessons from cutting RAG hallucinations 40–60% inside a bank."
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Apply the persisted portfolio theme before first paint to avoid a palette flash. -->
+    <script>
+      try {
+        var sgTheme = localStorage.getItem('sg-theme')
+        if (['electroform', 'editorial', 'terminal', 'aurora'].indexOf(sgTheme) !== -1) {
+          document.documentElement.setAttribute('data-theme', sgTheme)
+        }
+      } catch (e) {
+        /* storage unavailable — keep the default palette */
+      }
+    </script>
+  </head>
+  <body class="article-body">
+    <a class="skip-link" href="#article-main">Skip to article</a>
+    <div id="article-root" class="article"></div>
+
+    <noscript>
+      <p style="font: 16px/1.7 system-ui; margin: 0; padding: 4rem 2rem; max-width: 68ch">
+        This article page renders with JavaScript (its diagrams are drawn
+        client-side). The short version: hybrid FAISS + BM25 retrieval,
+        cross-encoder reranking, a grounding contract in the prompt, refusal
+        paths, and a nightly evaluation loop cut RAG hallucinations 40–60%
+        across five production systems at HDFC Bank.
+        <a href="/">Return to the portfolio</a>.
+      </p>
+    </noscript>
+
+    <script type="module" src="/src/article/main.ts"></script>
+  </body>
+</html>

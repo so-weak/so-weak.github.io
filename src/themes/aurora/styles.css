@@ -1,0 +1,1829 @@
+/* ==========================================================================
+   AURORA GLASS — dawn-sky gradients behind frosted glass, gold-foil tarot.
+   Every rule is scoped to [data-theme='aurora']; this sheet stays loaded
+   after a theme switch and must never bleed.
+
+   Layering note: the WebGL gradient field is the page background (canvas at
+   z 0). Nothing here paints an opaque background over it — panels are glass.
+   The wrapper (.au) is never transformed: it contains a position:fixed nav.
+   ========================================================================== */
+
+/* --- tokens ---------------------------------------------------------------- */
+
+[data-theme='aurora'] {
+  /* Deep midnight — the GL sky IS the background; dark glass floats over it. */
+  --au-base: #0b0813;
+  --au-ink: #e8e0f8;
+  --au-ink-soft: rgba(232, 224, 248, 0.82);
+  --au-ink-faint: rgba(232, 224, 248, 0.52);
+  --au-hairline: rgba(232, 224, 248, 0.13);
+  --au-gold: #d4a843;         /* richer gold — tarot foil */
+  --au-gold-ink: #e8c062;     /* gold text on dark: high contrast */
+  --au-gold-soft: rgba(212, 168, 67, 0.32);
+  --au-gold-faint: rgba(212, 168, 67, 0.14);
+  --au-lav: #8f68d8;          /* saturated amethyst */
+  --au-blush: #c85070;        /* deep rose */
+  --au-mint: #2fae82;         /* deep teal */
+  --au-sky: #3468cc;          /* deep midnight blue */
+  --au-glass-hi: rgba(255, 255, 255, 0.07);   /* dark glass instead of white glass */
+  --au-glass-lo: rgba(255, 255, 255, 0.03);
+  --au-glass-border: rgba(255, 255, 255, 0.15);
+  --au-shadow:
+    0 24px 60px -28px rgba(20, 0, 60, 0.72),
+    0 6px 22px -12px rgba(20, 0, 60, 0.38);
+  --au-shadow-deep:
+    0 42px 90px -32px rgba(20, 0, 60, 0.85),
+    0 10px 30px -12px rgba(20, 0, 60, 0.48);
+  --au-serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
+  --au-sans: 'Outfit Variable', system-ui, -apple-system, sans-serif;
+  --au-line-pad: clamp(36px, 6vw, 64px);
+}
+
+/* --- page scaffold ----------------------------------------------------------- */
+
+[data-theme='aurora'] body {
+  background: var(--au-base); /* matches the GL clear colour so no flash on boot */
+}
+
+[data-theme='aurora'] ::selection {
+  background: color-mix(in srgb, var(--au-lav) 60%, transparent);
+  color: var(--au-ink);
+}
+
+/* Gold-ink at 4.6:1 on the dark base — meets WCAG AA for focus indicators. */
+[data-theme='aurora'] :focus-visible {
+  outline: 2px solid var(--au-gold-ink);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+[data-theme='aurora'] * {
+  scrollbar-color: rgba(232, 224, 248, 0.18) transparent;
+}
+
+[data-theme='aurora'] ::-webkit-scrollbar-thumb {
+  background: rgba(232, 224, 248, 0.18);
+  background-clip: content-box;
+}
+
+/* Custom cursor: a hollow gold ring that blooms on interactives. */
+[data-theme='aurora'] #cursor .cursor-dot {
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: transparent;
+  border: 1.5px solid rgba(232, 224, 248, 0.7);
+  mix-blend-mode: normal;
+  box-shadow: none;
+  transition:
+    transform var(--dur-base) var(--ease-out-back),
+    border-color var(--dur-base) ease,
+    background-color var(--dur-base) ease,
+    opacity var(--dur-fast) ease;
+}
+
+[data-theme='aurora'] #cursor[data-mode='hover'] .cursor-dot {
+  transform: scale(2.6);
+  border-color: var(--au-gold);
+  background: rgba(212, 168, 67, 0.15);
+}
+
+/* --- wrapper / choreography ----------------------------------------------------- */
+
+[data-theme='aurora'] .au {
+  font-family: var(--au-sans);
+  font-weight: 380;
+  color: var(--au-ink);
+  /* opacity only — a transform here would re-parent the fixed pill nav */
+  opacity: 1;
+  transition: opacity 360ms var(--ease-in-out-cubic);
+}
+
+[data-theme='aurora'] .au.is-leaving {
+  opacity: 0;
+}
+
+/* Staggered intro (hero + pill) — armed at init, released on mount. */
+[data-theme='aurora'] .au-intro {
+  opacity: 0;
+  transform: translateY(26px);
+}
+
+[data-theme='aurora'] .au.is-mounted .au-intro {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 1100ms var(--ease-out-expo) var(--d, 0ms),
+    transform 1100ms var(--ease-out-expo) var(--d, 0ms);
+}
+
+/* CSS cursor parallax — hero layers float toward the cursor (JS sets --cx/--cy). */
+[data-theme='aurora'] .au-hero__name {
+  translate: calc(var(--cx, 0) * 6px) calc(var(--cy, 0) * -4px);
+  transition: translate 900ms cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme='aurora'] .au-hero__tagline {
+  translate: calc(var(--cx, 0) * 4px) calc(var(--cy, 0) * -2.5px);
+  transition: translate 1000ms cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme='aurora'] .au-fan {
+  translate: calc(var(--cx, 0) * 10px) calc(var(--cy, 0) * -6px);
+  transition: translate 800ms cubic-bezier(.16,1,.3,1);
+}
+
+/* Scroll-linked reveals (IntersectionObserver adds .is-in). */
+[data-theme='aurora'] .au-reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 1000ms var(--ease-out-expo) var(--d, 0ms),
+    transform 1000ms var(--ease-out-expo) var(--d, 0ms);
+}
+
+[data-theme='aurora'] .au-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- type utilities ----------------------------------------------------------- */
+
+[data-theme='aurora'] .au-caps {
+  font-family: var(--au-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+
+/* --- glass primitive ------------------------------------------------------------ */
+
+[data-theme='aurora'] .au-glass {
+  position: relative;
+  background: linear-gradient(150deg, rgba(30, 12, 65, 0.72), rgba(12, 6, 30, 0.82));
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
+  border: 1px solid var(--au-glass-border);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 67, 0.12),
+    var(--au-shadow);
+}
+
+/* --- pill nav ---------------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-top {
+  position: fixed;
+  top: clamp(12px, 2.4vh, 22px);
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+[data-theme='aurora'] .au-pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 20px);
+  padding: 8px 14px 8px 18px;
+  border-radius: 999px;
+  background: linear-gradient(120deg, rgba(30, 12, 65, 0.88), rgba(12, 6, 30, 0.92));
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(212, 168, 67, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 67, 0.15),
+    0 14px 38px -18px rgba(20, 0, 60, 0.65);
+  opacity: 0;
+  transform: translateY(-16px);
+  transition:
+    opacity 900ms var(--ease-out-expo) 120ms,
+    transform 900ms var(--ease-out-expo) 120ms,
+    padding 500ms var(--ease-out-expo),
+    box-shadow 500ms ease;
+}
+
+[data-theme='aurora'] .au.is-mounted .au-pill {
+  opacity: 1;
+  transform: none;
+}
+
+[data-theme='aurora'] .au.is-scrolled .au-pill {
+  padding: 5px 10px 5px 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 18px 44px -16px rgba(96, 78, 140, 0.55);
+}
+
+[data-theme='aurora'] .au-pill__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px 4px 0;
+  text-decoration: none;
+  border-right: 1px solid var(--au-hairline);
+}
+
+[data-theme='aurora'] .au-pill__moon {
+  display: inline-flex;
+  width: 18px;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-pill__name {
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.06rem;
+  line-height: 1;
+}
+
+[data-theme='aurora'] .au-pill__list {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+[data-theme='aurora'] .au-pill__list::-webkit-scrollbar {
+  display: none;
+}
+
+[data-theme='aurora'] .au-pill__list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 480;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--au-ink-soft);
+  transition:
+    color 300ms ease,
+    background-color 300ms ease,
+    padding 500ms var(--ease-out-expo);
+}
+
+[data-theme='aurora'] .au.is-scrolled .au-pill__list a {
+  padding: 6px 9px;
+}
+
+[data-theme='aurora'] .au-pill__list a:hover {
+  color: var(--au-gold-ink);
+  background: rgba(143, 104, 216, 0.28);
+}
+
+[data-theme='aurora'] .au-pill__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--au-gold);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 400ms ease,
+    transform 400ms var(--ease-out-back);
+}
+
+[data-theme='aurora'] .au-pill__list a.is-active {
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-pill__list a.is-active .au-pill__dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+[data-theme='aurora'] .au-pill__lab {
+  color: var(--au-gold-ink) !important;
+}
+
+[data-theme='aurora'] .au-pill__lab:hover {
+  background: rgba(184, 148, 95, 0.12) !important;
+}
+
+/* --- shared section scaffold ------------------------------------------------------ */
+
+[data-theme='aurora'] .au-main {
+  display: block;
+}
+
+[data-theme='aurora'] .au-section {
+  width: min(1080px, calc(100% - 48px));
+  margin-inline: auto;
+  padding-block: clamp(88px, 13vh, 150px) 0;
+}
+
+[data-theme='aurora'] .au-head {
+  text-align: center;
+  margin-bottom: clamp(40px, 6vh, 64px);
+}
+
+[data-theme='aurora'] .au-head__ornament {
+  display: flex;
+  justify-content: center;
+  color: var(--au-gold);
+  margin-bottom: 22px;
+}
+
+[data-theme='aurora'] .au-head__ornament svg {
+  width: clamp(180px, 24vw, 240px);
+}
+
+[data-theme='aurora'] .au-head__label {
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-head__title {
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--step-4);
+  line-height: 1.06;
+  letter-spacing: 0.005em;
+  margin-top: 12px;
+}
+
+/* --- hero --------------------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: clamp(110px, 16vh, 170px) 24px 110px;
+}
+
+[data-theme='aurora'] .au-hero__kicker {
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-hero__name {
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: clamp(3.2rem, 10.5vw, 8.2rem);
+  line-height: 0.98;
+  letter-spacing: 0.01em;
+  margin-top: 22px;
+  text-wrap: balance;
+  /* press-and-hold egg: no selection/callout while holding the name */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Katakana flip egg — each letter is a 3D flipper; latin face in flow,
+   kana face on the back. JS toggles .is-kana on the h1; the per-letter
+   stagger rides on the --kd delays dom.ts bakes in. */
+[data-theme='aurora'] .au-name {
+  display: inline-block;
+  white-space: nowrap; /* the old &nbsp; behavior: the name never breaks */
+}
+
+[data-theme='aurora'] .au-name__ch {
+  position: relative;
+  display: inline-block;
+  transform-style: preserve-3d;
+  transition: transform 480ms var(--ease-in-out-cubic) var(--kd, 0ms);
+}
+
+[data-theme='aurora'] .au-hero__name.is-kana .au-name__ch {
+  transform: perspective(600px) rotateX(180deg);
+}
+
+[data-theme='aurora'] .au-name__face--latin {
+  display: inline-block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* The italic-gold vowel run the serif lockup was designed around. */
+[data-theme='aurora'] .au-name__ch.is-em .au-name__face--latin {
+  font-style: italic;
+  font-weight: 400;
+  color: color-mix(in srgb, var(--au-ink) 70%, var(--au-gold) 30%);
+}
+
+[data-theme='aurora'] .au-name__face--kana {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateX(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  font-size: 0.74em; /* kana glyphs run large against the serif caps */
+  font-style: normal;
+  font-weight: 500;
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-hero__tagline {
+  max-width: 58ch;
+  margin-top: 26px;
+  font-size: var(--step-0);
+  font-weight: 350;
+  line-height: 1.7;
+  color: var(--au-ink-soft);
+}
+
+/* Dealt fan of three mini cards — ENGINEER / ARTIST / SEEKER. */
+[data-theme='aurora'] .au-fan {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin-top: clamp(34px, 5vh, 52px);
+  min-height: 150px;
+}
+
+[data-theme='aurora'] .au-fan__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 96px;
+  height: 142px;
+  margin-inline: -9px;
+  border-radius: 12px;
+  background: linear-gradient(165deg, rgba(50, 20, 95, 0.88), rgba(18, 6, 48, 0.92));
+  border: 1px solid rgba(212, 168, 67, 0.35);
+  box-shadow: 0 16px 34px -16px rgba(20, 0, 60, 0.65);
+  transform-origin: 50% 130%;
+  transform: rotate(calc((var(--fi) - 1) * 11deg))
+    translateY(calc((var(--fi) - 1) * (var(--fi) - 1) * 7px));
+  transition: transform 700ms var(--ease-out-expo);
+}
+
+[data-theme='aurora'] .au-fan:hover .au-fan__card {
+  transform: rotate(calc((var(--fi) - 1) * 15deg))
+    translateY(calc((var(--fi) - 1) * (var(--fi) - 1) * 9px - 4px));
+}
+
+[data-theme='aurora'] .au-fan__glyph {
+  display: block;
+  width: 38px;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-fan__word {
+  font-size: 0.58rem;
+  font-weight: 520;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: clamp(30px, 4.6vh, 46px);
+}
+
+[data-theme='aurora'] .au-hero__action {
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--au-ink-soft);
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--au-gold-soft);
+  transition:
+    color 300ms ease,
+    border-color 300ms ease;
+}
+
+[data-theme='aurora'] .au-hero__action:hover {
+  color: var(--au-gold-ink);
+  border-color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-hero__sep {
+  color: var(--au-gold);
+  font-size: 0.7rem;
+}
+
+[data-theme='aurora'] .au-hero__cue {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--au-ink-faint);
+  font-size: 0.6rem;
+  opacity: 0;
+  transition: opacity 800ms ease 1600ms;
+}
+
+[data-theme='aurora'] .au.is-mounted .au-hero__cue {
+  opacity: 1;
+}
+
+[data-theme='aurora'] .au.is-scrolled .au-hero__cue {
+  opacity: 0;
+  transition-delay: 0ms;
+}
+
+[data-theme='aurora'] .au-hero__cue i {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 48px;
+  background: linear-gradient(var(--au-hairline), transparent);
+}
+
+[data-theme='aurora'] .au-hero__cue i::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--au-gold);
+  animation: au-cue 2.6s var(--ease-in-out-cubic) infinite;
+}
+
+@keyframes au-cue {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(42px);
+    opacity: 0;
+  }
+}
+
+/* --- about ----------------------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-about__panel {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) 1fr;
+  gap: clamp(30px, 4.5vw, 56px);
+  align-items: start;
+  padding: clamp(28px, 4.5vw, 54px);
+}
+
+[data-theme='aurora'] .au-about__portrait {
+  margin: 0;
+}
+
+/* Tarot-arch portrait frame: double gold arch, image arched to match. */
+[data-theme='aurora'] .au-arch {
+  display: block;
+  padding: 10px;
+  border: 1px solid var(--au-gold-soft);
+  border-radius: 999px 999px 18px 18px;
+  background: rgba(20, 8, 50, 0.65);
+}
+
+[data-theme='aurora'] .au-arch img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 999px 999px 10px 10px;
+}
+
+[data-theme='aurora'] .au-about__portrait figcaption {
+  margin-top: 14px;
+  text-align: center;
+  font-size: 0.62rem;
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-about__prose {
+  max-width: 68ch;
+}
+
+[data-theme='aurora'] .au-about__prose p {
+  font-size: 1.02rem;
+  font-weight: 360;
+  line-height: 1.78;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-about__prose p + p {
+  margin-top: 1.2em;
+}
+
+[data-theme='aurora'] .au-about__prose p::first-letter {
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: 1.35em;
+  line-height: 1;
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-about__stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+/* --- chips (shared) ----------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+[data-theme='aurora'] .au-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 13px;
+  border: 1px solid var(--au-hairline);
+  border-radius: 999px;
+  background: rgba(30, 12, 65, 0.58);
+  font-size: 0.76rem;
+  font-weight: 420;
+  letter-spacing: 0.02em;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-chip--gold {
+  border-color: var(--au-gold-soft);
+}
+
+[data-theme='aurora'] .au-chip--gold strong {
+  font-family: var(--au-serif);
+  font-weight: 600;
+  font-size: 1.04rem;
+  line-height: 1;
+  color: var(--au-gold-ink);
+}
+
+/* --- tarot hobby cards (THE signature) -------------------------------------------------- */
+
+[data-theme='aurora'] .au-hobbies {
+  margin-top: clamp(56px, 8vh, 88px);
+}
+
+[data-theme='aurora'] .au-hobbies__label {
+  text-align: center;
+  color: var(--au-ink-faint);
+  margin-bottom: 34px;
+}
+
+[data-theme='aurora'] .au-tarot {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  gap: clamp(16px, 2.4vw, 28px);
+}
+
+[data-theme='aurora'] .au-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  height: 100%;
+  min-height: 432px;
+  padding: 30px 22px 24px;
+  border-radius: 14px;
+  /* Dark velvet glass — deep amethyst tint with stars behind it */
+  background: linear-gradient(
+    165deg,
+    rgba(30, 12, 65, 0.82),
+    rgba(12, 6, 30, 0.90)
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(1.8);
+  backdrop-filter: blur(18px) saturate(1.8);
+  border: 1px solid rgba(212, 168, 67, 0.28); /* gold hairline */
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 67, 0.18),
+    inset 0 -1px 0 rgba(212, 168, 67, 0.08),
+    var(--au-shadow);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: box-shadow 600ms ease, border-color 400ms ease;
+}
+
+/* JS owns .au-card's transform (damped 3D tilt) — never transition it. */
+
+[data-theme='aurora'] .au-card:hover {
+  border-color: rgba(212, 168, 67, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 67, 0.28),
+    0 0 0 1px var(--au-gold-soft),
+    0 0 40px rgba(143, 104, 216, 0.4),
+    var(--au-shadow-deep);
+}
+
+/* Deep amethyst + gold halo behind the hovered card. */
+[data-theme='aurora'] .au-card::after {
+  content: '';
+  position: absolute;
+  inset: -22px;
+  z-index: -1;
+  border-radius: 28px;
+  background: radial-gradient(
+    closest-side,
+    rgba(143, 104, 216, 0.45),
+    rgba(212, 168, 67, 0.15) 55%,
+    transparent 75%
+  );
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+[data-theme='aurora'] .au-card:hover::after {
+  opacity: 1;
+}
+
+/* Inner gold-foil arch frame — more prominent on dark. */
+[data-theme='aurora'] .au-card__arch {
+  position: absolute;
+  inset: 9px;
+  border: 1.5px solid var(--au-gold-soft);
+  border-radius: 999px 999px 10px 10px;
+  pointer-events: none;
+  /* Subtle inner glow on the arch */
+  box-shadow: inset 0 0 20px rgba(212, 168, 67, 0.06);
+}
+
+[data-theme='aurora'] .au-card__numeral {
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: 1.05rem;
+  letter-spacing: 0.34em;
+  text-indent: 0.34em; /* re-center the tracked numeral */
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-card__glyph {
+  width: clamp(64px, 6vw, 80px);
+  margin: 26px 0 20px;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-card__arcana {
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.72rem;
+  line-height: 1.1;
+}
+
+[data-theme='aurora'] .au-card__title {
+  margin-top: 9px;
+  font-size: 0.6rem;
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-card__desc {
+  margin-top: 16px;
+  padding-inline: 8px;
+  font-size: 0.82rem;
+  font-weight: 380;
+  line-height: 1.66;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-card__foot {
+  margin-top: auto;
+  padding-top: 18px;
+  color: var(--au-gold);
+  font-size: 0.72rem;
+}
+
+/* --- experience: the journey line --------------------------------------------------------- */
+
+[data-theme='aurora'] .au-exp__line {
+  position: relative;
+  max-width: 760px;
+  margin-inline: auto;
+  padding-left: var(--au-line-pad);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(30px, 4.5vh, 44px);
+}
+
+[data-theme='aurora'] .au-exp__line::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 6px;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--au-gold-soft) 8%,
+    var(--au-hairline) 50%,
+    var(--au-gold-soft) 92%,
+    transparent
+  );
+}
+
+[data-theme='aurora'] .au-exp__item {
+  position: relative;
+}
+
+[data-theme='aurora'] .au-exp__node {
+  position: absolute;
+  top: 32px;
+  left: calc(-1 * var(--au-line-pad) + 1px);
+  width: 11px;
+  height: 11px;
+  background: var(--au-base);
+  border: 1px solid var(--au-gold);
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 5px rgba(247, 245, 251, 0.6);
+}
+
+[data-theme='aurora'] .au-exp__node--small {
+  top: 26px;
+  width: 7px;
+  height: 7px;
+  left: calc(-1 * var(--au-line-pad) + 3px);
+  border-color: var(--au-gold-soft);
+}
+
+[data-theme='aurora'] .au-exp__card {
+  padding: clamp(24px, 3.4vw, 38px);
+}
+
+[data-theme='aurora'] .au-exp__meta {
+  font-size: 0.62rem;
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-exp__company {
+  margin-top: 12px;
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: var(--step-2);
+  line-height: 1.08;
+}
+
+[data-theme='aurora'] .au-exp__role {
+  margin-top: 4px;
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-size: 1.12rem;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-exp__summary {
+  margin-top: 16px;
+  max-width: 62ch;
+  font-size: 0.95rem;
+  line-height: 1.72;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-exp__highlights {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+[data-theme='aurora'] .au-exp__highlights li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-exp__highlights li::before {
+  content: '✦';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 0.66rem;
+  line-height: 2.2;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-exp__card .au-chips {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--au-hairline);
+}
+
+[data-theme='aurora'] .au-exp__card .au-chip {
+  font-size: 0.7rem;
+  padding: 5px 11px;
+}
+
+[data-theme='aurora'] .au-exp__epoch {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--au-ink-faint);
+  font-size: 0.6rem;
+  padding-block: 4px;
+}
+
+[data-theme='aurora'] .au-exp__epoch::before,
+[data-theme='aurora'] .au-exp__epoch::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: var(--au-hairline);
+}
+
+[data-theme='aurora'] .au-exp__card--edu {
+  padding: 20px 26px;
+}
+
+[data-theme='aurora'] .au-exp__school {
+  margin-top: 8px;
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: 1.3rem;
+}
+
+[data-theme='aurora'] .au-exp__degree {
+  margin-top: 3px;
+  font-size: 0.86rem;
+  color: var(--au-ink-soft);
+}
+
+/* --- projects: the works ---------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-projects__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(18px, 2.6vw, 30px);
+}
+
+[data-theme='aurora'] .au-project {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: clamp(26px, 3.4vw, 40px);
+  text-decoration: none;
+  transition:
+    transform 650ms var(--ease-out-expo),
+    box-shadow 650ms ease;
+}
+
+[data-theme='aurora'] .au-project:hover {
+  transform: translateY(-8px);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 67, 0.2),
+    0 0 0 1px var(--au-gold-faint),
+    var(--au-shadow-deep);
+}
+
+[data-theme='aurora'] .au-project__kind {
+  font-size: 0.6rem;
+  color: var(--au-gold-ink);
+}
+
+[data-theme='aurora'] .au-project__name {
+  margin-top: 13px;
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: var(--step-2);
+  line-height: 1.05;
+}
+
+[data-theme='aurora'] .au-project__tagline {
+  margin-top: 7px;
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-size: 1.16rem;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-project__desc {
+  margin-top: 15px;
+  font-size: 0.9rem;
+  line-height: 1.68;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-project__metrics {
+  margin-top: 18px;
+}
+
+[data-theme='aurora'] .au-project__stack {
+  margin-top: 14px;
+}
+
+[data-theme='aurora'] .au-project__stack .au-chip {
+  font-size: 0.68rem;
+  padding: 4px 10px;
+  background: rgba(18, 6, 45, 0.7);
+}
+
+[data-theme='aurora'] .au-project__links {
+  margin-top: auto;
+  padding-top: 22px;
+  display: flex;
+  gap: 20px;
+}
+
+[data-theme='aurora'] .au-project__links a {
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--au-gold-ink);
+  border-bottom: 1px solid transparent;
+  transition: border-color 300ms ease;
+}
+
+[data-theme='aurora'] .au-project__links a:hover {
+  border-color: var(--au-gold);
+}
+
+/* --- skills: the constellations -------------------------------------------------------- */
+
+[data-theme='aurora'] .au-sky {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(22px, 3.4vw, 44px);
+}
+
+[data-theme='aurora'] .au-cluster {
+  position: relative;
+  flex: 1 1 300px;
+  max-width: 480px;
+  padding: 40px 26px 10px;
+  text-align: center;
+}
+
+/* Hairline arc each cluster hangs from. */
+[data-theme='aurora'] .au-cluster::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 6%;
+  right: 6%;
+  height: 110px;
+  border: 1px solid var(--au-hairline);
+  border-color: var(--au-hairline) transparent transparent transparent;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+[data-theme='aurora'] .au-cluster:nth-child(even) {
+  margin-top: 30px;
+}
+
+[data-theme='aurora'] .au-cluster__name {
+  font-size: 0.66rem;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-cluster__name span {
+  color: var(--au-gold);
+  margin-right: 6px;
+}
+
+[data-theme='aurora'] .au-cluster__stars {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px 9px; /* extra row gap absorbs the ±6px star jitter */
+  margin-top: 20px;
+}
+
+/* Constellation edges: faint hairlines crossing behind the stars, so the
+   chips read as connected points of light rather than a tag cloud. */
+[data-theme='aurora'] .au-cluster__stars::before {
+  content: '';
+  position: absolute;
+  inset: 6px 9%;
+  background:
+    linear-gradient(75deg, transparent 49.7%, var(--au-hairline) 50%, transparent 50.3%),
+    linear-gradient(-58deg, transparent 49.75%, var(--au-hairline) 50%, transparent 50.25%),
+    linear-gradient(16deg, transparent 49.8%, var(--au-gold-faint) 50%, transparent 50.2%);
+  pointer-events: none;
+}
+
+/* Stars drift off the baseline — gentle deterministic jitter per position. */
+[data-theme='aurora'] .au-cluster__stars li:nth-child(3n) {
+  transform: translateY(-6px);
+}
+
+[data-theme='aurora'] .au-cluster__stars li:nth-child(3n + 2) {
+  transform: translateY(5px);
+}
+
+[data-theme='aurora'] .au-star {
+  position: relative;
+  padding: 6px 13px 6px 24px;
+  border: 1px solid var(--au-hairline);
+  border-radius: 999px;
+  background: rgba(20, 8, 55, 0.62);
+  font-size: 0.76rem;
+  font-weight: 420;
+  color: var(--au-ink-soft);
+  transition:
+    border-color 300ms ease,
+    color 300ms ease;
+}
+
+[data-theme='aurora'] .au-star::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin-top: -2.5px;
+  background: var(--au-gold);
+  transform: rotate(45deg);
+  opacity: 0.65;
+  transition: opacity 300ms ease;
+}
+
+[data-theme='aurora'] .au-star:hover {
+  border-color: var(--au-gold-soft);
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-star:hover::before {
+  opacity: 1;
+}
+
+/* First-magnitude stars — the brightest skills of each constellation. */
+[data-theme='aurora'] .au-star[data-major] {
+  padding: 7px 15px 7px 26px;
+  border-color: var(--au-gold-soft);
+  background: rgba(30, 10, 70, 0.75);
+  font-size: 0.82rem;
+  font-weight: 480;
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-star[data-major]::before {
+  left: 12px;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  opacity: 1;
+  box-shadow: 0 0 8px 1px var(--au-gold-soft);
+}
+
+[data-theme='aurora'] .au-star[data-major]:hover {
+  border-color: var(--au-gold);
+}
+
+/* --- awards: the readings ----------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-readings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(225px, 1fr));
+  gap: clamp(16px, 2.2vw, 26px);
+  max-width: 1020px;
+  margin-inline: auto;
+}
+
+[data-theme='aurora'] .au-reading {
+  height: 100%;
+  min-height: 235px;
+  padding: 34px 22px 26px;
+  text-align: center;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+[data-theme='aurora'] .au-reading::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid var(--au-gold-faint);
+  border-radius: 999px 999px 9px 9px;
+  pointer-events: none;
+}
+
+[data-theme='aurora'] .au-reading__numeral {
+  font-family: var(--au-serif);
+  font-size: 0.95rem;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-reading__title {
+  margin-top: 18px;
+  font-family: var(--au-serif);
+  font-weight: 500;
+  font-size: 1.34rem;
+  line-height: 1.18;
+}
+
+[data-theme='aurora'] .au-reading__detail {
+  margin-top: 12px;
+  font-size: 0.79rem;
+  line-height: 1.6;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-awards__minor {
+  margin-top: clamp(44px, 6vh, 64px);
+  text-align: center;
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-certs {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  font-size: 0.85rem;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-certs__sep {
+  color: var(--au-gold);
+  font-size: 0.62rem;
+}
+
+/* --- writing: cards yet unturned ------------------------------------------------------------ */
+
+[data-theme='aurora'] .au-writing__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(24px, 4.5vw, 56px);
+}
+
+[data-theme='aurora'] .au-facedown {
+  max-width: 250px;
+  text-align: center;
+  transform: rotate(calc((var(--wi) - 1) * 2deg));
+}
+
+/* The face-down card is a real button — the tarot-draw easter egg. */
+[data-theme='aurora'] .au-facedown__btn {
+  display: block;
+  width: clamp(140px, 15vw, 174px);
+  margin: 0 auto 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+  perspective: 900px;
+  transition: transform 750ms var(--ease-out-expo);
+}
+
+[data-theme='aurora'] .au-facedown__btn:hover {
+  transform: translateY(-10px);
+}
+
+[data-theme='aurora'] .au-facedown__flip {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 5;
+  transform-style: preserve-3d;
+  transition: transform 760ms var(--ease-in-out-cubic);
+}
+
+[data-theme='aurora'] .au-facedown__btn.is-flipped .au-facedown__flip {
+  transform: rotateY(180deg);
+}
+
+[data-theme='aurora'] .au-facedown__face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 13px;
+  box-shadow: var(--au-shadow);
+}
+
+[data-theme='aurora'] .au-facedown__face--back {
+  color: var(--au-gold);
+  background: linear-gradient(
+    155deg,
+    rgba(232, 224, 252, 0.92),
+    rgba(252, 238, 246, 0.85) 55%,
+    rgba(228, 240, 250, 0.9)
+  );
+}
+
+[data-theme='aurora'] .au-facedown__face--back svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+[data-theme='aurora'] .au-facedown__face--front {
+  transform: rotateY(180deg);
+  gap: 10px;
+  padding: 20px 14px;
+  text-align: center;
+  border: 1px solid var(--au-gold-soft);
+  background: linear-gradient(165deg, rgba(40, 14, 92, 0.96), rgba(12, 4, 36, 0.98));
+}
+
+[data-theme='aurora'] .au-facedown__face--front::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--au-gold-faint);
+  border-radius: 999px 999px 9px 9px;
+  pointer-events: none;
+}
+
+[data-theme='aurora'] .au-draw__numeral {
+  font-family: var(--au-serif);
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-draw__name {
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.18rem;
+  line-height: 1.15;
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-draw__reading {
+  font-size: 0.66rem;
+  line-height: 1.55;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-facedown__soon {
+  font-size: 0.58rem;
+  color: var(--au-gold-ink);
+}
+
+[data-theme='aurora'] .au-writing__title {
+  margin-top: 10px;
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.32rem;
+  line-height: 1.2;
+}
+
+[data-theme='aurora'] .au-writing__blurb {
+  margin-top: 11px;
+  font-size: 0.8rem;
+  line-height: 1.62;
+  color: var(--au-ink-soft);
+}
+
+/* Published entry — dealt face-up, the whole card is the link. */
+[data-theme='aurora'] .au-faceup {
+  max-width: 250px;
+  text-align: center;
+}
+
+[data-theme='aurora'] .au-faceup__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: clamp(150px, 16vw, 184px);
+  aspect-ratio: 3 / 5;
+  margin: 0 auto 22px;
+  padding: 20px 16px;
+  border-radius: 13px;
+  text-decoration: none;
+  border: 1px solid rgba(212, 168, 67, 0.45);
+  background: linear-gradient(165deg, rgba(40, 14, 92, 0.96), rgba(12, 4, 36, 0.98));
+  box-shadow: var(--au-shadow);
+  transition:
+    transform 750ms var(--ease-out-expo),
+    box-shadow 750ms ease;
+}
+
+[data-theme='aurora'] .au-faceup__card::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid var(--au-gold-faint);
+  border-radius: 999px 999px 9px 9px;
+  pointer-events: none;
+}
+
+[data-theme='aurora'] .au-faceup__card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--au-shadow-deep);
+}
+
+[data-theme='aurora'] .au-faceup__numeral {
+  font-family: var(--au-serif);
+  font-size: 1rem;
+  color: var(--au-gold);
+}
+
+[data-theme='aurora'] .au-faceup__title {
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.18rem;
+  line-height: 1.18;
+  color: var(--au-ink);
+}
+
+[data-theme='aurora'] .au-faceup__minutes {
+  font-size: 0.56rem;
+  color: var(--au-gold-ink);
+}
+
+[data-theme='aurora'] .au-faceup__read {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--au-gold-ink);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--au-gold-soft);
+  transition:
+    color 300ms ease,
+    border-color 300ms ease;
+}
+
+[data-theme='aurora'] .au-faceup__read:hover {
+  color: var(--au-ink);
+  border-color: var(--au-gold);
+}
+
+/* --- contact ----------------------------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-contact {
+  text-align: center;
+  padding-bottom: clamp(70px, 10vh, 120px);
+}
+
+[data-theme='aurora'] .au-contact__blurb {
+  max-width: 58ch;
+  margin-inline: auto;
+  font-size: 0.98rem;
+  line-height: 1.74;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-contact__email {
+  display: inline-block;
+  margin-top: clamp(28px, 4.5vh, 44px);
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.7rem, 4.6vw, 3.6rem);
+  line-height: 1.1;
+  text-decoration: none;
+  color: var(--au-ink);
+  background-image: linear-gradient(var(--au-gold), var(--au-gold));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 1px;
+  transition:
+    background-size 600ms var(--ease-out-expo),
+    color 400ms ease;
+  overflow-wrap: anywhere;
+}
+
+[data-theme='aurora'] .au-contact__email:hover {
+  color: var(--au-gold-ink);
+  background-size: 100% 1px;
+}
+
+[data-theme='aurora'] .au-contact__row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: clamp(16px, 3vw, 30px);
+  margin-top: clamp(30px, 5vh, 50px);
+}
+
+[data-theme='aurora'] .au-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 14px 28px;
+  border: 1px solid var(--au-gold-soft);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(30, 10, 65, 0.88), rgba(12, 4, 32, 0.94));
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(212, 168, 67, 0.22),
+    0 14px 32px -16px rgba(20, 0, 60, 0.55);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--au-gold-ink);
+  transition:
+    transform 500ms var(--ease-out-expo),
+    border-color 350ms ease,
+    box-shadow 500ms ease,
+    background-color 350ms ease;
+}
+
+[data-theme='aurora'] .au-btn:hover {
+  transform: translateY(-3px);
+  border-color: var(--au-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 20px 40px -16px rgba(96, 78, 140, 0.5);
+}
+
+[data-theme='aurora'] .au-contact__link {
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--au-ink-soft);
+  padding-bottom: 5px;
+  border-bottom: 1px solid transparent;
+  transition:
+    color 300ms ease,
+    border-color 300ms ease;
+}
+
+[data-theme='aurora'] .au-contact__link:hover {
+  color: var(--au-gold-ink);
+  border-color: var(--au-gold-soft);
+}
+
+/* --- footer ---------------------------------------------------------------------------------- */
+
+[data-theme='aurora'] .au-footer {
+  width: min(1080px, calc(100% - 48px));
+  margin-inline: auto;
+  padding: 44px 0 56px;
+  border-top: 1px solid var(--au-hairline);
+  text-align: center;
+}
+
+[data-theme='aurora'] .au-footer__moons {
+  display: flex;
+  justify-content: center;
+  color: var(--au-gold);
+}
+
+/* Moon-phase easter egg — the row is a button; clicks advance the cycle. */
+[data-theme='aurora'] .au-moons {
+  display: inline-flex;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background-color 300ms ease;
+}
+
+[data-theme='aurora'] .au-moons:hover {
+  background: rgba(184, 148, 95, 0.1);
+}
+
+[data-theme='aurora'] .au-moons__row {
+  display: inline-flex;
+  gap: 10px;
+}
+
+[data-theme='aurora'] .au-footer__moons svg {
+  width: 20px;
+  opacity: 0.85;
+}
+
+/* おつかれさま whisper toast — full-moon reward, announced via live region. */
+[data-theme='aurora'] .au-toast {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(28px, 6vh, 56px);
+  z-index: 50;
+  transform: translate(-50%, 14px);
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 1px solid var(--au-gold-soft);
+  background: linear-gradient(135deg, rgba(30, 10, 65, 0.94), rgba(12, 4, 32, 0.98));
+  -webkit-backdrop-filter: blur(12px) saturate(1.4);
+  backdrop-filter: blur(12px) saturate(1.4);
+  box-shadow: var(--au-shadow);
+  font-family: var(--au-serif);
+  font-size: 1.05rem;
+  color: var(--au-gold-ink);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 500ms ease,
+    transform 500ms var(--ease-out-expo);
+}
+
+[data-theme='aurora'] .au-toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+[data-theme='aurora'] .au-footer__line {
+  margin-top: 18px;
+  font-size: 0.78rem;
+  color: var(--au-ink-faint);
+}
+
+[data-theme='aurora'] .au-footer__line em {
+  font-family: var(--au-serif);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: var(--au-ink-soft);
+}
+
+[data-theme='aurora'] .au-footer__type {
+  margin-top: 10px;
+  font-size: 0.56rem;
+  color: var(--au-ink-faint);
+  opacity: 0.8;
+}
+
+/* --- mobile -------------------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  [data-theme='aurora'] .au-top {
+    top: 10px;
+  }
+
+  [data-theme='aurora'] .au-pill {
+    padding: 6px 8px 6px 12px;
+  }
+
+  [data-theme='aurora'] .au-pill__name {
+    display: none;
+  }
+
+  [data-theme='aurora'] .au-pill__brand {
+    padding-right: 8px;
+  }
+
+  [data-theme='aurora'] .au-pill__list a {
+    padding: 8px 8px;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    gap: 5px;
+  }
+
+  [data-theme='aurora'] .au-section {
+    width: calc(100% - 36px);
+    padding-block: 76px 0;
+  }
+
+  [data-theme='aurora'] .au-hero {
+    padding-top: 90px;
+  }
+
+  [data-theme='aurora'] .au-fan__card {
+    width: 78px;
+    height: 118px;
+    margin-inline: -8px;
+  }
+
+  [data-theme='aurora'] .au-fan__glyph {
+    width: 30px;
+  }
+
+  [data-theme='aurora'] .au-about__panel {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='aurora'] .au-about__portrait {
+    max-width: 230px;
+    margin-inline: auto;
+  }
+
+  [data-theme='aurora'] .au-card {
+    min-height: 0;
+    padding-bottom: 30px;
+  }
+
+  [data-theme='aurora'] .au-exp__line {
+    --au-line-pad: 26px;
+  }
+
+  [data-theme='aurora'] .au-projects__grid {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='aurora'] .au-cluster:nth-child(even) {
+    margin-top: 0;
+  }
+
+  [data-theme='aurora'] .au-writing__row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  [data-theme='aurora'] .au-facedown {
+    transform: none;
+  }
+}
+
+/* --- reduced motion --------------------------------------------------------------------------------
+   base.css already collapses all transition/animation durations globally;
+   these rules remove what duration-squashing alone can't (looping keyframes,
+   resting offsets), so the composed static frame reads cleanly. */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='aurora'] .au-intro,
+  [data-theme='aurora'] .au-reveal {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Kill cursor drift under reduced motion */
+  [data-theme='aurora'] .au-hero__name,
+  [data-theme='aurora'] .au-hero__tagline,
+  [data-theme='aurora'] .au-fan {
+    translate: none;
+    transition: none;
+  }
+
+  [data-theme='aurora'] .au-hero__cue {
+    opacity: 0;
+  }
+
+  [data-theme='aurora'] .au-hero__cue i::after {
+    animation: none;
+  }
+
+  [data-theme='aurora'] .au-fan:hover .au-fan__card {
+    transform: rotate(calc((var(--fi) - 1) * 11deg))
+      translateY(calc((var(--fi) - 1) * (var(--fi) - 1) * 7px));
+  }
+
+  [data-theme='aurora'] .au-project:hover,
+  [data-theme='aurora'] .au-btn:hover {
+    transform: none;
+  }
+
+  [data-theme='aurora'] .au-facedown__btn:hover,
+  [data-theme='aurora'] .au-faceup__card:hover {
+    transform: none;
+  }
+
+  /* Instant swaps: kill the per-letter --kd delays and the 3D card flip
+     (base.css squashes durations, but transition-delay survives that). */
+  [data-theme='aurora'] .au-name__ch,
+  [data-theme='aurora'] .au-facedown__flip {
+    transition: none;
+  }
+
+  [data-theme='aurora'] .au-toast {
+    transition: none;
+    transform: translate(-50%, 0);
+  }
+}

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Stylized geometric portrait of Soubhik Ghosh">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16161a"/>
+      <stop offset="1" stop-color="#0e0e11"/>
+    </linearGradient>
+    <linearGradient id="facet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2c2c33"/>
+      <stop offset="1" stop-color="#1d1d22"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="1000" fill="url(#bg)"/>
+
+  <!-- faint construction grid -->
+  <g stroke="#26262c" stroke-width="1" opacity="0.5">
+    <path d="M200 0V1000M400 0V1000M600 0V1000"/>
+    <path d="M0 250H800M0 500H800M0 750H800"/>
+  </g>
+
+  <!-- shoulders -->
+  <polygon points="120,1000 260,790 400,760 540,790 680,1000" fill="#1a1a1f"/>
+  <polygon points="260,790 400,760 400,1000 190,1000" fill="#202026"/>
+  <polygon points="400,760 540,790 610,1000 400,1000" fill="#191920"/>
+
+  <!-- neck -->
+  <polygon points="352,640 448,640 460,780 400,810 340,780" fill="#23232a"/>
+  <polygon points="352,640 400,660 400,810 340,780" fill="#1e1e25"/>
+
+  <!-- head — faceted -->
+  <polygon points="400,160 520,220 545,360 520,500 460,610 400,640 340,610 280,500 255,360 280,220" fill="url(#facet)"/>
+  <polygon points="400,160 520,220 470,300 400,280" fill="#33333b"/>
+  <polygon points="400,160 280,220 330,300 400,280" fill="#2a2a31"/>
+  <polygon points="470,300 545,360 500,430 430,380" fill="#27272e"/>
+  <polygon points="330,300 255,360 300,430 370,380" fill="#222229"/>
+  <polygon points="400,280 470,300 430,380 400,400 370,380 330,300" fill="#2f2f37"/>
+  <polygon points="430,380 500,430 460,540 400,500" fill="#1f1f26"/>
+  <polygon points="370,380 300,430 340,540 400,500" fill="#24242b"/>
+  <polygon points="400,400 430,380 400,500 370,380" fill="#2b2b33"/>
+  <polygon points="460,540 460,610 400,640 400,500" fill="#1c1c22"/>
+  <polygon points="340,540 340,610 400,640 400,500" fill="#212128"/>
+
+  <!-- single accent edge -->
+  <polyline points="280,220 400,160 520,220" fill="none" stroke="#5cf2c4" stroke-width="3" opacity="0.85"/>
+  <line x1="400" y1="400" x2="400" y2="500" stroke="#5cf2c4" stroke-width="2" opacity="0.45"/>
+
+  <!-- monogram corner mark -->
+  <g transform="translate(700,64)" stroke="#3a3a42" stroke-width="3" fill="none">
+    <path d="M24 0H0v14h24v14H0"/>
+  </g>
+</svg>

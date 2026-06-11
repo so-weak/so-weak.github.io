@@ -1,0 +1,2008 @@
+/* ==========================================================================
+   VAN GOGH — the retrospective the painter never got.
+   Museum gallery × letters to Theo: gilt frames and brass plaques hung on a
+   living Starry Night (the GL canvas at z 0 IS the wall). Every rule is
+   scoped to [data-theme='vangogh']; this sheet stays loaded after a theme
+   switch and must never bleed. All keyframes are prefixed vg-.
+
+   Layering note: nothing here paints an opaque full-bleed background over
+   the GL sky — panels are tinted night-glass so the paint churns through.
+   The wrapper (.vg) is never transformed: it contains the fixed masthead.
+   Parallax (data-speed) writes the CSS `translate` property from JS, so all
+   decorative rotation in here rides `transform` — the two compose.
+   ========================================================================== */
+
+/* --- tokens ----------------------------------------------------------------- */
+
+[data-theme='vangogh'] {
+  --vg-night: #0e1a3a; /* deep prussian ground — matches the GL clear */
+  --vg-night-2: #1a2a52;
+  --vg-cyan: #4f7bd9;
+  --vg-yellow: #f5c842; /* chrome-yellow stars; 10.6:1 on --vg-night */
+  --vg-ochre: #d9a441; /* wheat; 7.5:1 on --vg-night */
+  --vg-verm: #d4502e; /* vermilion — seals/ribbons, never small body text */
+  --vg-ivory: #f2ecdc; /* body text; 14.7:1 on --vg-night (AA with headroom) */
+  --vg-ivory-soft: rgba(242, 236, 220, 0.82); /* ≈11:1 on night panels */
+  --vg-ivory-faint: rgba(242, 236, 220, 0.66); /* ≈8:1 — still AA on night */
+  --vg-hairline: rgba(242, 236, 220, 0.16);
+  --vg-hairline-strong: rgba(242, 236, 220, 0.3);
+
+  /* night-glass panels (over the GL sky) */
+  --vg-panel: color-mix(in srgb, #0b1530 78%, transparent);
+  --vg-panel-deep: color-mix(in srgb, #091126 88%, transparent);
+
+  /* brass plaques — engraved museum labels. The visible text field runs
+     brass-hi → #c3a058 only; --vg-brass-lo is bevel/edge shading (inset
+     rings, the medal rim) and never sits under text. */
+  --vg-brass-hi: #d9b66c;
+  --vg-brass-lo: #93702f;
+  --vg-brass-ink: #1f1806; /* engraved text: 7.1:1 on the ramp floor #c3a058 */
+  --vg-brass-ink-soft: rgba(31, 24, 6, 0.85); /* ≈5.5:1 composited on the floor */
+
+  /* gilt frame wood + gallery furniture */
+  --vg-gilt-hi: #c9a85c;
+  --vg-gilt-mid: #8a6a33;
+  --vg-gilt-lo: #5a431d;
+  --vg-wood-hi: #7a5a33;
+  --vg-wood-lo: #4a3520;
+
+  --vg-shadow:
+    0 30px 70px -30px rgba(2, 6, 18, 0.85),
+    0 8px 24px -10px rgba(2, 6, 18, 0.6);
+  --vg-shadow-soft: 0 14px 40px -18px rgba(2, 6, 18, 0.7);
+
+  --vg-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --vg-sans: 'Hanken Grotesk Variable', system-ui, -apple-system, sans-serif;
+  --vg-hand-font: 'Caveat', 'Cormorant Garamond', cursive;
+
+  --vg-mast-h: 72px;
+  --vg-gutter: clamp(20px, 5vw, 72px);
+}
+
+/* --- page scaffold ------------------------------------------------------------ */
+
+[data-theme='vangogh'] body {
+  background: var(--vg-night); /* matches the GL clear — no flash on boot */
+}
+
+[data-theme='vangogh'] ::selection {
+  background: var(--vg-yellow);
+  color: var(--vg-night);
+}
+
+[data-theme='vangogh'] :focus-visible {
+  outline: 2px solid var(--vg-yellow);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+[data-theme='vangogh'] * {
+  scrollbar-color: rgba(242, 236, 220, 0.28) transparent;
+}
+
+[data-theme='vangogh'] ::-webkit-scrollbar-thumb {
+  background: rgba(242, 236, 220, 0.28);
+  background-clip: content-box;
+}
+
+/* Cursor: a daub of chrome yellow — the brush tip stirring the paint. */
+[data-theme='vangogh'] #cursor .cursor-dot {
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  background: var(--vg-yellow);
+  mix-blend-mode: normal;
+  box-shadow: 0 0 18px rgba(245, 200, 66, 0.55);
+  border-radius: 46% 54% 52% 48% / 54% 46% 54% 46%;
+}
+
+[data-theme='vangogh'] #cursor[data-mode='hover'] .cursor-dot {
+  transform: scale(2.1);
+  background: color-mix(in srgb, var(--vg-yellow) 75%, #fff);
+}
+
+/* --- wrapper lifecycle ----------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg {
+  font-family: var(--vg-sans);
+  font-weight: 400;
+  color: var(--vg-ivory);
+  /* opacity only — a transform here would re-parent the fixed masthead */
+  opacity: 1;
+  transition: opacity 360ms var(--ease-in-out-cubic);
+}
+
+[data-theme='vangogh'] .vg.is-leaving {
+  opacity: 0;
+}
+
+/* Staggered intro (hero + masthead) — armed at init, released on mount. */
+[data-theme='vangogh'] .vg-intro {
+  opacity: 0;
+  transform: translateY(26px);
+}
+
+[data-theme='vangogh'] .vg.is-mounted .vg-intro {
+  opacity: 1;
+  transform: rotate(var(--rot, 0deg));
+  transition:
+    opacity 1100ms var(--ease-out-expo) var(--d, 0ms),
+    transform 1100ms var(--ease-out-expo) var(--d, 0ms);
+}
+
+/* Scroll-linked gallery reveals (IntersectionObserver adds .is-in): frames
+   arrive slightly over-rotated and STRAIGHTEN to their resting --rot. */
+[data-theme='vangogh'] .vg-reveal {
+  opacity: 0;
+  transform: translateY(30px) rotate(calc(var(--rot, 0deg) * 2.4));
+  transition:
+    opacity 1000ms var(--ease-out-expo) var(--d, 0ms),
+    transform 1000ms var(--ease-out-expo) var(--d, 0ms);
+}
+
+[data-theme='vangogh'] .vg-reveal.is-in {
+  opacity: 1;
+  transform: rotate(var(--rot, 0deg));
+}
+
+/* Handwritten asides write themselves in — a clip-path wipe along the line. */
+[data-theme='vangogh'] .vg-write {
+  clip-path: inset(-12% 102% -16% -2%);
+  transition: clip-path 1500ms var(--ease-in-out-cubic) calc(var(--d, 0ms) + 250ms);
+}
+
+[data-theme='vangogh'] .vg.is-mounted .vg-write.vg-intro,
+[data-theme='vangogh'] .vg-write.vg-reveal.is-in,
+[data-theme='vangogh'] .vg-write.is-in {
+  clip-path: inset(-12% -2% -16% -2%);
+}
+
+/* The wipe must ride WITH the fade/stagger transitions. For elements that
+   are also .vg-reveal (room notes, the salon aside) the lone clip-path
+   `transition` above would replace the reveal's opacity/transform pair; for
+   the hero letter the higher-specificity `.vg.is-mounted .vg-intro` rule
+   would replace the clip-path one. Both get the merged list. */
+[data-theme='vangogh'] .vg-write.vg-reveal {
+  transition:
+    opacity 1000ms var(--ease-out-expo) var(--d, 0ms),
+    transform 1000ms var(--ease-out-expo) var(--d, 0ms),
+    clip-path 1500ms var(--ease-in-out-cubic) calc(var(--d, 0ms) + 250ms);
+}
+
+[data-theme='vangogh'] .vg.is-mounted .vg-write.vg-intro {
+  transition:
+    opacity 1100ms var(--ease-out-expo) var(--d, 0ms),
+    transform 1100ms var(--ease-out-expo) var(--d, 0ms),
+    clip-path 1500ms var(--ease-in-out-cubic) calc(var(--d, 0ms) + 250ms);
+}
+
+/* --- type utilities ----------------------------------------------------------------- */
+
+/* Eyebrows often sit STRAIGHT on the GL sky, whose wheat/café chapters can
+   brighten to near-ochre — the layered night halo keeps them legible on the
+   field's hottest bands (and disappears against the dark panels). */
+[data-theme='vangogh'] .vg-eyebrow {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--vg-ochre);
+  text-shadow:
+    0 0 2px rgba(5, 9, 24, 0.9),
+    0 1px 3px rgba(5, 9, 24, 0.8),
+    0 2px 14px rgba(5, 9, 24, 0.85);
+}
+
+[data-theme='vangogh'] .vg-hand {
+  font-family: var(--vg-hand-font);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: 0.01em;
+  color: var(--vg-yellow);
+}
+
+/* Room headers — wall didactics in painterly Fraunces. */
+[data-theme='vangogh'] .vg-head {
+  margin-bottom: clamp(36px, 5vw, 64px);
+}
+
+[data-theme='vangogh'] .vg-head__title {
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 72, 'SOFT' 60, 'WONK' 1;
+  font-weight: 560;
+  font-size: var(--step-4);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  margin-top: 10px;
+  color: var(--vg-ivory);
+  /* A tight halo under the broad glow — the title rides the same sky as
+     the eyebrows and must survive the chrome-yellow blooms. */
+  text-shadow:
+    0 1px 4px rgba(5, 9, 24, 0.7),
+    0 2px 26px rgba(5, 9, 24, 0.65);
+}
+
+[data-theme='vangogh'] .vg-head__rule {
+  display: block;
+  width: 88px;
+  height: 4px;
+  margin-top: 18px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--vg-verm), var(--vg-ochre) 60%, transparent);
+}
+
+/* --- canvas-weave grain over everything (subtle, non-interactive) ------------------- */
+
+[data-theme='vangogh'] .vg-weave {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(242, 236, 220, 0.7) 0 1px,
+      transparent 1px 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(242, 236, 220, 0.7) 0 1px,
+      transparent 1px 3px
+    );
+}
+
+/* --- masthead: the gallery's front desk ----------------------------------------------- */
+
+[data-theme='vangogh'] .vg-mast {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.5vw, 32px);
+  height: var(--vg-mast-h);
+  padding-inline: clamp(16px, 3vw, 40px);
+  background: linear-gradient(
+    180deg,
+    rgba(7, 12, 28, 0.92),
+    rgba(7, 12, 28, 0.78) 70%,
+    transparent
+  );
+  border-bottom: 1px solid var(--vg-hairline);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 900ms var(--ease-out-expo) 200ms;
+}
+
+[data-theme='vangogh'] .vg.is-mounted .vg-mast {
+  opacity: 1;
+}
+
+[data-theme='vangogh'] .vg-mast__brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+[data-theme='vangogh'] .vg-mast__sg {
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 40, 'SOFT' 40, 'WONK' 1;
+  font-weight: 640;
+  font-size: 1.3rem;
+  color: var(--vg-yellow);
+}
+
+[data-theme='vangogh'] .vg-mast__word {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--vg-ivory-soft);
+}
+
+[data-theme='vangogh'] .vg-mast__nav {
+  flex: 1;
+  min-width: 0;
+}
+
+[data-theme='vangogh'] .vg-mast__nav ul {
+  display: flex;
+  gap: clamp(8px, 1.6vw, 22px);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 4px;
+}
+
+[data-theme='vangogh'] .vg-mast__nav ul::-webkit-scrollbar {
+  display: none;
+}
+
+[data-theme='vangogh'] .vg-mast__nav a {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-decoration: none;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: border-color var(--dur-base) ease, background var(--dur-fast) ease;
+}
+
+[data-theme='vangogh'] .vg-mast__room {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--vg-ochre);
+}
+
+[data-theme='vangogh'] .vg-mast__label {
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--vg-ivory-soft);
+}
+
+[data-theme='vangogh'] .vg-mast__nav a:hover .vg-mast__label {
+  color: var(--vg-ivory);
+}
+
+[data-theme='vangogh'] .vg-mast__nav a.is-active {
+  border-bottom-color: var(--vg-yellow);
+}
+
+[data-theme='vangogh'] .vg-mast__nav a.is-active .vg-mast__label {
+  color: var(--vg-yellow);
+}
+
+/* Wax-seal résumé button — pressed vermilion with the monogram. */
+[data-theme='vangogh'] .vg-seal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+[data-theme='vangogh'] .vg-seal__wax {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 47% 53% 50% 50% / 52% 48% 54% 46%;
+  background:
+    radial-gradient(circle at 32% 28%, #ef7a52 0 18%, transparent 42%),
+    radial-gradient(circle at 70% 75%, #8e2f14 0 30%, transparent 60%),
+    var(--vg-verm);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 200, 160, 0.5),
+    inset 0 -3px 6px rgba(60, 12, 0, 0.6),
+    0 4px 14px rgba(2, 6, 18, 0.6);
+  font-family: var(--vg-display);
+  font-weight: 640;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: #ffe9d6; /* embossed monogram on wax — decorative, label carries meaning */
+  transition: transform var(--dur-base) var(--ease-out-back);
+}
+
+[data-theme='vangogh'] .vg-seal__word {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--vg-ivory-soft);
+  border-bottom: 1px solid transparent;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+[data-theme='vangogh'] .vg-seal:hover .vg-seal__wax {
+  transform: rotate(-8deg) scale(1.06);
+}
+
+[data-theme='vangogh'] .vg-seal:hover .vg-seal__word {
+  color: var(--vg-ivory);
+  border-bottom-color: var(--vg-ochre);
+}
+
+/* --- plaque system: engraved brass museum labels ---------------------------------------- */
+
+/* The text field ends at #c3a058 (the old 34% stop); the dark --vg-brass-lo
+   tone now lives only in the inset bevel, so tall plaques (hero, soweak,
+   the lit studies) keep AA contrast down to their last row. */
+[data-theme='vangogh'] .vg-plaque {
+  display: block;
+  padding: 14px 18px;
+  border-radius: 4px;
+  background:
+    linear-gradient(
+      168deg,
+      var(--vg-brass-hi) 0%,
+      #cfab60 46%,
+      #c3a058 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.65),
+    inset 0 0 0 1px color-mix(in srgb, var(--vg-brass-lo) 80%, transparent),
+    inset 0 -2px 4px rgba(40, 28, 4, 0.5),
+    0 6px 18px -8px rgba(2, 6, 18, 0.7);
+  color: var(--vg-brass-ink);
+}
+
+/* Yellow focus rings vanish into brass — engrave them instead. */
+[data-theme='vangogh'] .vg-plaque :focus-visible {
+  outline-color: var(--vg-brass-ink);
+}
+
+[data-theme='vangogh'] .vg-plaque__title {
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 28, 'SOFT' 30;
+  font-weight: 620;
+  font-size: var(--step-0);
+  line-height: 1.25;
+  color: var(--vg-brass-ink);
+  text-shadow: 0 1px 0 rgba(255, 240, 200, 0.4); /* the engraving */
+}
+
+[data-theme='vangogh'] .vg-plaque__numeral {
+  font-weight: 480;
+  color: var(--vg-brass-ink-soft);
+}
+
+[data-theme='vangogh'] .vg-plaque__medium {
+  margin-top: 2px;
+  font-size: var(--step--1);
+  font-style: italic;
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 14;
+  color: var(--vg-brass-ink-soft);
+}
+
+[data-theme='vangogh'] .vg-plaque__line {
+  margin-top: 8px;
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--vg-brass-ink);
+}
+
+/* The stack — pigment chips pressed into the brass. */
+[data-theme='vangogh'] .vg-plaque__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+[data-theme='vangogh'] .vg-plaque__stack li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 24, 6, 0.45);
+  background: rgba(255, 240, 200, 0.22);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--vg-brass-ink);
+}
+
+/* The full catalogue entry — description + checklist folding out of the
+   plaque under its engraved rule. Native <details>: no JS, no motion. */
+[data-theme='vangogh'] .vg-plaque__cat {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(31, 24, 6, 0.3);
+}
+
+[data-theme='vangogh'] .vg-plaque__cat summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--vg-brass-ink);
+}
+
+[data-theme='vangogh'] .vg-plaque__cat summary::-webkit-details-marker {
+  display: none;
+}
+
+[data-theme='vangogh'] .vg-plaque__catmark {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(31, 24, 6, 0.5);
+  font-size: 0.78rem;
+  line-height: 1;
+  transition: transform var(--dur-base) var(--ease-out-back);
+}
+
+[data-theme='vangogh'] .vg-plaque__cat[open] .vg-plaque__catmark {
+  transform: rotate(45deg);
+}
+
+[data-theme='vangogh'] .vg-plaque__desc {
+  margin-top: 8px;
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--vg-brass-ink);
+}
+
+[data-theme='vangogh'] .vg-plaque__points {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+[data-theme='vangogh'] .vg-plaque__points li {
+  position: relative;
+  padding-left: 16px;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--vg-brass-ink);
+}
+
+/* A daub of vermilion for each checklist point — paint, not typography. */
+[data-theme='vangogh'] .vg-plaque__points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.5em;
+  width: 8px;
+  height: 8px;
+  border-radius: 46% 54% 50% 50% / 52% 48% 56% 44%;
+  background: var(--vg-verm);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+[data-theme='vangogh'] .vg-plaque--small {
+  padding: 10px 14px;
+}
+
+[data-theme='vangogh'] .vg-plaque--stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 18px 12px;
+}
+
+[data-theme='vangogh'] .vg-plaque--stat strong {
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 40, 'SOFT' 40;
+  font-weight: 640;
+  font-size: var(--step-2);
+  line-height: 1;
+  color: var(--vg-brass-ink);
+}
+
+[data-theme='vangogh'] .vg-plaque--stat span {
+  font-size: var(--step--1);
+  color: var(--vg-brass-ink-soft);
+}
+
+[data-theme='vangogh'] .vg-plaque--chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 14px;
+}
+
+[data-theme='vangogh'] .vg-plaque--chip strong {
+  font-size: var(--step--1);
+  font-weight: 700;
+  color: var(--vg-brass-ink);
+}
+
+[data-theme='vangogh'] .vg-plaque--chip span {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  color: var(--vg-brass-ink-soft);
+}
+
+/* The work's lead checklist point — its substance stays in the room. */
+[data-theme='vangogh'] .vg-plaque__chipnote {
+  margin-top: 5px;
+  font-family: var(--vg-display);
+  font-style: italic;
+  font-variation-settings: 'opsz' 14;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--vg-brass-ink);
+}
+
+/* The pigments it was painted with. */
+[data-theme='vangogh'] .vg-plaque__chipstack {
+  margin-top: 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--vg-brass-ink-soft);
+}
+
+[data-theme='vangogh'] a.vg-plaque--link {
+  display: inline-block;
+  padding: 12px 20px;
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-out-back), filter var(--dur-fast) ease;
+}
+
+[data-theme='vangogh'] a.vg-plaque--link:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.08);
+}
+
+/* --- night-glass wall panels -------------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg-wall {
+  background: var(--vg-panel);
+  border: 1px solid var(--vg-hairline);
+  border-radius: 6px;
+  box-shadow: var(--vg-shadow-soft);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* --- buttons --------------------------------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg-btn {
+  display: inline-block;
+  padding: 13px 26px;
+  border-radius: 4px;
+  background: var(--vg-yellow);
+  color: #241b05; /* 9.8:1 on chrome yellow */
+  font-weight: 700;
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 248, 220, 0.7),
+    0 8px 22px -10px rgba(245, 200, 66, 0.55);
+  transition: transform var(--dur-base) var(--ease-out-back), filter var(--dur-fast) ease;
+}
+
+[data-theme='vangogh'] .vg-btn:hover {
+  transform: translateY(-3px);
+  filter: brightness(1.05);
+}
+
+/* --- layout shell ------------------------------------------------------------------------------ */
+
+[data-theme='vangogh'] .vg-main {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: var(--vg-gutter);
+}
+
+[data-theme='vangogh'] .vg-section {
+  padding-block: clamp(90px, 13vh, 170px);
+}
+
+/* --- hero: the entrance, name over the living sky ------------------------------------------------ */
+
+[data-theme='vangogh'] .vg-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding-top: var(--vg-mast-h);
+  position: relative;
+}
+
+[data-theme='vangogh'] .vg-hero__kicker {
+  color: var(--vg-yellow);
+  text-shadow: 0 1px 14px rgba(5, 9, 24, 0.8);
+}
+
+[data-theme='vangogh'] .vg-hero__name {
+  margin-top: 18px;
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 144, 'SOFT' 70, 'WONK' 1;
+  font-weight: 580;
+  font-size: clamp(3.2rem, 11.5vw, 9rem);
+  line-height: 0.96;
+  letter-spacing: -0.015em;
+  color: var(--vg-ivory);
+  text-shadow:
+    0 3px 38px rgba(5, 9, 24, 0.75),
+    0 1px 6px rgba(5, 9, 24, 0.5);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+[data-theme='vangogh'] .vg-name {
+  display: block;
+}
+
+[data-theme='vangogh'] .vg-name__word {
+  display: block;
+  white-space: nowrap;
+}
+
+[data-theme='vangogh'] .vg-name__word--last {
+  margin-left: clamp(28px, 9vw, 150px);
+}
+
+/* Katakana flip egg — each letter is a 3D flipper; latin face in flow, kana
+   on the back. JS toggles .is-kana on the h1; the per-letter stagger rides
+   the --kd delays dom.ts bakes in. */
+[data-theme='vangogh'] .vg-name__ch {
+  position: relative;
+  display: inline-block;
+  transform-style: preserve-3d;
+  transition: transform 480ms var(--ease-in-out-cubic) var(--kd, 0ms);
+}
+
+[data-theme='vangogh'] .vg-hero__name.is-kana .vg-name__ch {
+  transform: perspective(620px) rotateX(180deg);
+}
+
+[data-theme='vangogh'] .vg-name__face--latin {
+  display: inline-block;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* The chrome-yellow italic vowel run the lockup is designed around. */
+[data-theme='vangogh'] .vg-name__ch.is-em .vg-name__face--latin {
+  font-style: italic;
+  font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1;
+  color: var(--vg-yellow);
+}
+
+[data-theme='vangogh'] .vg-name__face--kana {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotateX(180deg);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  font-size: 0.6em; /* kana glyphs run large against the serif caps */
+  font-style: normal;
+  font-weight: 520;
+  color: var(--vg-ivory);
+}
+
+[data-theme='vangogh'] .vg-hero__plaque {
+  max-width: 560px;
+  margin-top: clamp(26px, 4vh, 44px);
+}
+
+[data-theme='vangogh'] .vg-hero__letter {
+  /* decorative tilt rides --rot so the intro/reveal machinery keeps it */
+  --rot: -2deg;
+  margin-top: clamp(22px, 3.5vh, 36px);
+  max-width: 30ch;
+  font-size: clamp(1.45rem, 2.6vw, 1.9rem);
+  line-height: 1.25;
+  text-shadow: 0 1px 16px rgba(5, 9, 24, 0.8);
+}
+
+[data-theme='vangogh'] .vg-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: clamp(26px, 4vh, 44px);
+}
+
+[data-theme='vangogh'] .vg-hero__enter {
+  font-weight: 600;
+  font-size: var(--step--1);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--vg-ivory);
+  border-bottom: 2px solid var(--vg-ochre);
+  padding-bottom: 3px;
+  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
+}
+
+[data-theme='vangogh'] .vg-hero__enter:hover {
+  color: var(--vg-yellow);
+  border-bottom-color: var(--vg-yellow);
+}
+
+[data-theme='vangogh'] .vg-hero__cue {
+  position: absolute;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 900ms ease 1700ms;
+}
+
+[data-theme='vangogh'] .vg.is-mounted .vg-hero__cue {
+  opacity: 0.85;
+}
+
+[data-theme='vangogh'] .vg.is-scrolled .vg-hero__cue {
+  opacity: 0;
+  transition-delay: 0ms;
+}
+
+[data-theme='vangogh'] .vg-hero__cue i {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 44px;
+  background: var(--vg-hairline-strong);
+  overflow: hidden;
+}
+
+[data-theme='vangogh'] .vg-hero__cue i::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -40%;
+  width: 100%;
+  height: 40%;
+  background: var(--vg-yellow);
+  animation: vg-cue-fall 2.1s var(--ease-in-out-cubic) infinite;
+}
+
+@keyframes vg-cue-fall {
+  0% {
+    top: -40%;
+  }
+  60%,
+  100% {
+    top: 110%;
+  }
+}
+
+/* --- ROOM I · about: self-portrait + the hobby wall ------------------------------------------------ */
+
+[data-theme='vangogh'] .vg-about__row {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) 1fr;
+  gap: clamp(28px, 4vw, 56px);
+  align-items: start;
+}
+
+/* The painted frame: layered borders, no images. */
+[data-theme='vangogh'] .vg-portrait {
+  --rot: -1.4deg;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+[data-theme='vangogh'] .vg-portrait__frame {
+  display: block;
+  padding: clamp(12px, 1.6vw, 18px);
+  background: linear-gradient(
+    132deg,
+    var(--vg-gilt-hi) 0%,
+    var(--vg-gilt-mid) 30%,
+    var(--vg-gilt-hi) 52%,
+    var(--vg-gilt-lo) 78%,
+    var(--vg-gilt-mid) 100%
+  );
+  border: 1px solid rgba(20, 14, 4, 0.8);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 3px rgba(28, 20, 6, 0.55),
+    inset 0 0 0 5px rgba(220, 186, 110, 0.35),
+    var(--vg-shadow);
+}
+
+[data-theme='vangogh'] .vg-portrait__frame img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 1px solid rgba(20, 14, 4, 0.7);
+  background: var(--vg-night-2);
+}
+
+[data-theme='vangogh'] .vg-about__prose {
+  padding: clamp(24px, 3.2vw, 44px);
+}
+
+[data-theme='vangogh'] .vg-about__prose p {
+  max-width: 64ch;
+  line-height: 1.72;
+  color: var(--vg-ivory-soft);
+}
+
+[data-theme='vangogh'] .vg-about__prose p + p {
+  margin-top: 1.1em;
+}
+
+[data-theme='vangogh'] .vg-about__prose p::first-letter {
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 72, 'SOFT' 70, 'WONK' 1;
+  font-weight: 600;
+  font-size: 2.1em;
+  line-height: 0.8;
+  color: var(--vg-yellow);
+}
+
+[data-theme='vangogh'] .vg-vitrine {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+[data-theme='vangogh'] .vg-hobbywall {
+  margin-top: clamp(48px, 7vw, 84px);
+}
+
+[data-theme='vangogh'] .vg-hobbies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: clamp(18px, 2.6vw, 30px);
+  margin-top: 22px;
+}
+
+[data-theme='vangogh'] .vg-minicanvas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+
+/* Four small canvases — abstract studies painted in CSS gradients. */
+[data-theme='vangogh'] .vg-minicanvas__art {
+  height: 150px;
+  border-radius: 3px;
+  border: 6px solid var(--vg-gilt-mid);
+  outline: 1px solid rgba(20, 14, 4, 0.8);
+  box-shadow:
+    inset 0 0 0 2px rgba(28, 20, 6, 0.5),
+    var(--vg-shadow-soft);
+  filter: saturate(1.05);
+}
+
+/* I · Japanese — a vermilion gate sinking into indigo mist */
+[data-theme='vangogh'] .vg-minicanvas__art--0 {
+  background:
+    linear-gradient(90deg, transparent 24%, #d4502e 24% 32%, transparent 32% 66%, #d4502e 66% 74%, transparent 74%),
+    linear-gradient(180deg, transparent 30%, #d4502e 30% 40%, transparent 40%),
+    radial-gradient(120% 90% at 50% 110%, #1a2a52 0 45%, transparent 75%),
+    linear-gradient(180deg, #27407c, #0e1a3a);
+}
+
+/* II · Strings — taut diagonals over warm wood */
+[data-theme='vangogh'] .vg-minicanvas__art--1 {
+  background:
+    repeating-linear-gradient(
+      64deg,
+      transparent 0 14px,
+      rgba(245, 200, 66, 0.85) 14px 16px,
+      transparent 16px 34px,
+      rgba(242, 236, 220, 0.5) 34px 35px
+    ),
+    radial-gradient(80% 110% at 22% 18%, #7a5a33 0 30%, transparent 70%),
+    linear-gradient(160deg, #4a3520, #1d1610);
+}
+
+/* III · The Brush — one fat chrome daub mid-swirl */
+[data-theme='vangogh'] .vg-minicanvas__art--2 {
+  background:
+    conic-gradient(
+      from 210deg at 56% 46%,
+      #f5c842 0 70deg,
+      rgba(245, 200, 66, 0) 110deg 250deg,
+      #d9a441 290deg 330deg,
+      #f5c842 360deg
+    ),
+    radial-gradient(50% 50% at 56% 46%, #ffd95e 0 16%, transparent 42%),
+    linear-gradient(150deg, #16264e, #0e1a3a);
+}
+
+/* IV · The Seer — a spread of small stars on deepest night */
+[data-theme='vangogh'] .vg-minicanvas__art--3 {
+  background:
+    radial-gradient(circle at 22% 30%, #f5c842 0 4%, transparent 11%),
+    radial-gradient(circle at 68% 22%, #f2ecdc 0 2.6%, transparent 9%),
+    radial-gradient(circle at 80% 64%, #f5c842 0 3.4%, transparent 10%),
+    radial-gradient(circle at 40% 72%, #d9a441 0 3%, transparent 9%),
+    radial-gradient(circle at 55% 45%, #4f7bd9 0 7%, transparent 22%),
+    linear-gradient(170deg, #13224a, #0c1733);
+}
+
+/* --- ROOM II · experience: exhibition rooms with wall labels -------------------------------------- */
+
+[data-theme='vangogh'] .vg-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(40px, 6vw, 72px);
+  counter-reset: vg-room;
+}
+
+[data-theme='vangogh'] .vg-room {
+  padding: clamp(26px, 3.6vw, 48px);
+  border-left: 4px solid var(--vg-ochre);
+}
+
+[data-theme='vangogh'] .vg-room__label .vg-eyebrow {
+  color: var(--vg-cyan);
+}
+
+[data-theme='vangogh'] .vg-room__company {
+  margin-top: 8px;
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 60, 'SOFT' 50, 'WONK' 1;
+  font-weight: 600;
+  font-size: var(--step-3);
+  line-height: 1.05;
+  color: var(--vg-ivory);
+}
+
+[data-theme='vangogh'] .vg-room__medium {
+  margin-top: 6px;
+  font-family: var(--vg-display);
+  font-style: italic;
+  font-variation-settings: 'opsz' 16;
+  font-size: var(--step-0);
+  color: var(--vg-ochre);
+}
+
+[data-theme='vangogh'] .vg-room__summary {
+  margin-top: 14px;
+  max-width: 68ch;
+  line-height: 1.66;
+  color: var(--vg-ivory-soft);
+}
+
+/* Catalogue entries — numbered like a gallery checklist. */
+[data-theme='vangogh'] .vg-cat {
+  margin-top: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-theme='vangogh'] .vg-cat li {
+  position: relative;
+  padding-left: 86px;
+  max-width: 72ch;
+  line-height: 1.6;
+  font-size: var(--step--1);
+  color: var(--vg-ivory-soft);
+}
+
+[data-theme='vangogh'] .vg-cat__no {
+  position: absolute;
+  left: 0;
+  top: 0.18em;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--vg-yellow);
+}
+
+/* Richer chips (note + pigments) hang in even columns, not a ragged row. */
+[data-theme='vangogh'] .vg-works {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+/* Handwritten margin note pinned beside the room — it hangs on the raw sky
+   in the wheat chapter, so it gets the hero letter's night halo. */
+[data-theme='vangogh'] .vg-room__note {
+  --rot: -1.6deg;
+  margin: 18px 0 0 clamp(10px, 4vw, 60px);
+  max-width: 38ch;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  line-height: 1.3;
+  text-shadow: 0 1px 16px rgba(5, 9, 24, 0.8);
+}
+
+[data-theme='vangogh'] .vg-studies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin-top: 20px;
+  margin-bottom: 0;
+}
+
+[data-theme='vangogh'] .vg-exp > .vg-eyebrow {
+  display: block;
+  margin-top: clamp(44px, 6vw, 70px);
+}
+
+/* --- ROOM III · projects: the salon hang ------------------------------------------------------------ */
+
+[data-theme='vangogh'] .vg-salon__aside {
+  --rot: -1.2deg;
+  margin-bottom: 26px;
+  max-width: 42ch;
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  line-height: 1.3;
+  text-shadow: 0 1px 16px rgba(5, 9, 24, 0.8);
+}
+
+[data-theme='vangogh'] .vg-salon {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-auto-flow: dense;
+  gap: clamp(18px, 2.6vw, 34px);
+  align-items: start;
+}
+
+[data-theme='vangogh'] .vg-salon__item {
+  grid-column: span var(--cs, 2);
+}
+
+/* Gilt frame: layered borders + bevels, all CSS. */
+[data-theme='vangogh'] .vg-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: clamp(10px, 1.3vw, 16px);
+  background: linear-gradient(
+    128deg,
+    var(--vg-gilt-hi) 0%,
+    var(--vg-gilt-mid) 26%,
+    var(--vg-gilt-hi) 48%,
+    var(--vg-gilt-lo) 74%,
+    var(--vg-gilt-mid) 100%
+  );
+  border: 1px solid rgba(20, 14, 4, 0.85);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 3px rgba(28, 20, 6, 0.55),
+    inset 0 0 0 5px rgba(220, 186, 110, 0.32),
+    var(--vg-shadow);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+
+[data-theme='vangogh'] .vg-frame__mat {
+  padding: clamp(6px, 0.9vw, 10px);
+  background: #0a1228;
+  border: 1px solid rgba(20, 14, 4, 0.7);
+}
+
+/* The paintings in the frames. The base rule is the FALLBACK recipe for
+   works without an art-directed study (palette vars from dom.ts) — daubs
+   plus full-strength stroke bands so even the fallback reads as paint, not
+   bokeh. The ten hung works each get a composed study below (--0..--9,
+   mapped by name in dom.ts), built the way the hobby minicanvases are:
+   hard-stop shapes and stroke bands echoing the project's domain. */
+[data-theme='vangogh'] .vg-frame__art {
+  aspect-ratio: var(--ar, 4 / 3);
+  background:
+    radial-gradient(42% 55% at 30% 34%, var(--d2) 0 26%, transparent 62%),
+    radial-gradient(30% 38% at 72% 26%, var(--d3) 0 22%, transparent 58%),
+    radial-gradient(55% 48% at 64% 78%, color-mix(in srgb, var(--d2) 55%, var(--d1)) 0 30%, transparent 68%),
+    repeating-linear-gradient(
+      var(--ang, 24deg),
+      transparent 0 9px,
+      color-mix(in srgb, var(--d3) 62%, transparent) 9px 12px,
+      transparent 12px 26px
+    ),
+    repeating-linear-gradient(
+      calc(var(--ang, 24deg) + 64deg),
+      transparent 0 14px,
+      color-mix(in srgb, var(--d2) 38%, transparent) 14px 16px,
+      transparent 16px 36px
+    ),
+    linear-gradient(calc(var(--ang, 24deg) + 110deg), color-mix(in srgb, var(--d1) 82%, #000), var(--d1));
+  filter: saturate(1.02);
+  transition: filter var(--dur-base) ease;
+}
+
+/* I · soweak — the rampart: a chrome-and-night shield, vermilion intrusion
+   strokes breaking dead against it, one watchful star above. */
+[data-theme='vangogh'] .vg-frame__art--0 {
+  background:
+    radial-gradient(circle at 79% 18%, #f5c842 0 3.5%, rgba(245, 200, 66, 0.45) 6%, transparent 12%),
+    radial-gradient(34% 50% at 46% 56%, #f5c842 0 9%, #16264e 9% 56%, #d9a441 56% 66%, #16264e 66% 76%, #f5c842 76% 84%, rgba(11, 21, 48, 0.92) 84% 99%, transparent 100%),
+    repeating-linear-gradient(116deg, transparent 0 20px, #d4502e 20px 26px, transparent 26px 58px),
+    repeating-linear-gradient(24deg, transparent 0 11px, rgba(79, 123, 217, 0.5) 11px 14px, transparent 14px 32px),
+    linear-gradient(134deg, #16264e, #0e1a3a 55%, #0b1530);
+}
+
+/* II · aakaar — a typed DAG of daubs: chrome root, cyan branches, ochre
+   tasks, one ivory sink, the edges drawn as chalk strokes. */
+[data-theme='vangogh'] .vg-frame__art--1 {
+  background:
+    radial-gradient(circle at 50% 12%, #f5c842 0 7%, rgba(245, 200, 66, 0.4) 10%, transparent 16%),
+    radial-gradient(circle at 24% 42%, #4f7bd9 0 6%, transparent 12%),
+    radial-gradient(circle at 76% 42%, #4f7bd9 0 6%, transparent 12%),
+    radial-gradient(circle at 32% 74%, #d9a441 0 6%, transparent 12%),
+    radial-gradient(circle at 68% 74%, #d9a441 0 6%, transparent 12%),
+    radial-gradient(circle at 50% 93%, #f2ecdc 0 4.5%, transparent 10%),
+    linear-gradient(123deg, transparent 0 47%, rgba(242, 236, 220, 0.45) 47% 53%, transparent 53%) 32.4% 17.1% / 26% 30% no-repeat,
+    linear-gradient(57deg, transparent 0 47%, rgba(242, 236, 220, 0.45) 47% 53%, transparent 53%) 67.6% 17.1% / 26% 30% no-repeat,
+    linear-gradient(101deg, transparent 0 46%, rgba(242, 236, 220, 0.4) 46% 54%, transparent 54%) 26.1% 61.8% / 8% 32% no-repeat,
+    linear-gradient(79deg, transparent 0 46%, rgba(242, 236, 220, 0.4) 46% 54%, transparent 54%) 73.9% 61.8% / 8% 32% no-repeat,
+    linear-gradient(55deg, transparent 0 46%, rgba(242, 236, 220, 0.4) 46% 54%, transparent 54%) 39% 91.4% / 18% 19% no-repeat,
+    linear-gradient(125deg, transparent 0 46%, rgba(242, 236, 220, 0.4) 46% 54%, transparent 54%) 61% 91.4% / 18% 19% no-repeat,
+    repeating-linear-gradient(150deg, transparent 0 13px, rgba(79, 123, 217, 0.3) 13px 15px, transparent 15px 34px),
+    linear-gradient(172deg, #1a2a52, #0c1733);
+}
+
+/* III · AI Fabric: TradeOps — a parchment document afloat on wheat strokes,
+   one chrome extraction band pulled from its ledger lines. */
+[data-theme='vangogh'] .vg-frame__art--2 {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 11px, rgba(31, 24, 6, 0.5) 11px 13px, transparent 13px 24px) 50% 44% / 54% 58% no-repeat,
+    linear-gradient(#f5c842, #f5c842) 50% 33% / 54% 9% no-repeat,
+    linear-gradient(168deg, #f2ecdc, #e2d3ae) 50% 44% / 54% 58% no-repeat,
+    repeating-linear-gradient(86deg, transparent 0 9px, rgba(217, 164, 65, 0.6) 9px 12px, transparent 12px 24px),
+    linear-gradient(160deg, #6b4d1d, #1d1610);
+}
+
+/* IV · Pay-by-Face & LOOK — an ochre portrait oval under a chrome scan
+   beam, cyan reticle corners marking the match. */
+[data-theme='vangogh'] .vg-frame__art--3 {
+  background:
+    linear-gradient(rgba(245, 200, 66, 0.9), rgba(245, 200, 66, 0.9)) 50% 46% / 76% 3.5% no-repeat,
+    radial-gradient(15% 21% at 50% 52%, #d9a441 0 82%, #6b4d1d 82% 99%, transparent 100%),
+    linear-gradient(#4f7bd9, #4f7bd9) 16% 14% / 12% 3px no-repeat,
+    linear-gradient(#4f7bd9, #4f7bd9) 16% 14% / 3px 16% no-repeat,
+    linear-gradient(#4f7bd9, #4f7bd9) 84% 88% / 12% 3px no-repeat,
+    linear-gradient(#4f7bd9, #4f7bd9) 84% 88% / 3px 16% no-repeat,
+    repeating-linear-gradient(28deg, transparent 0 12px, rgba(79, 123, 217, 0.35) 12px 14px, transparent 14px 32px),
+    linear-gradient(150deg, #16264e, #0e1a3a);
+}
+
+/* V · RAG-as-a-Service — dense retrieval strata with the one true seam
+   reranked to chrome; the ivory query daub strikes it from the left. */
+[data-theme='vangogh'] .vg-frame__art--4 {
+  background:
+    linear-gradient(#f5c842, #f5c842) 0 36% / 100% 8% no-repeat,
+    radial-gradient(circle at 12% 39%, #f2ecdc 0 4.5%, transparent 10%),
+    repeating-linear-gradient(92deg, transparent 0 17px, rgba(79, 123, 217, 0.28) 17px 19px, transparent 19px 42px),
+    repeating-linear-gradient(176deg, #16264e 0 13px, #1a2a52 13px 24px, #23355f 24px 31px, #13224a 31px 49px);
+}
+
+/* VI · VerifyX — the audit: a ghosted ledger of lines on night, stamped
+   with the vermilion wax seal the Board talks to. */
+[data-theme='vangogh'] .vg-frame__art--5 {
+  background:
+    radial-gradient(circle at 72% 50%, #ef7a52 0 3%, #d4502e 3% 11%, #8e2f14 11% 13%, transparent 13%),
+    radial-gradient(circle at 72% 50%, transparent 0 16%, rgba(212, 80, 46, 0.6) 16% 18.5%, transparent 18.5%),
+    repeating-linear-gradient(0deg, transparent 0 12px, rgba(242, 236, 220, 0.42) 12px 14px, transparent 14px 30px) 10% 50% / 44% 62% no-repeat,
+    linear-gradient(170deg, rgba(242, 236, 220, 0.14), rgba(242, 236, 220, 0.06)) 10% 50% / 44% 62% no-repeat,
+    repeating-linear-gradient(24deg, transparent 0 11px, rgba(79, 123, 217, 0.38) 11px 13px, transparent 13px 30px),
+    linear-gradient(140deg, #16213f, #0e1a3a);
+}
+
+/* VII · Cheque Document AI — a parchment slip rushing on horizontal
+   throughput strokes: chrome amount box, signature slash, MICR dashes. */
+[data-theme='vangogh'] .vg-frame__art--6 {
+  background:
+    repeating-linear-gradient(90deg, #1f1806 0 8px, transparent 8px 16px) 50% 60% / 56% 4% no-repeat,
+    linear-gradient(75deg, transparent 0 55%, rgba(31, 24, 6, 0.65) 55% 58%, transparent 58%) 30% 40% / 30% 18% no-repeat,
+    linear-gradient(#f5c842, #f5c842) 74% 32% / 14% 10% no-repeat,
+    linear-gradient(172deg, #f2ecdc, #ded0ae) 50% 44% / 64% 46% no-repeat,
+    repeating-linear-gradient(90deg, transparent 0 14px, rgba(79, 123, 217, 0.5) 14px 17px, transparent 17px 38px),
+    linear-gradient(150deg, #1a2a52, #0e1a3a);
+}
+
+/* VIII · Narad AI & VERA — the voice: a chrome speaking daub, its rings
+   rippling out across the night in ochre and cyan. */
+[data-theme='vangogh'] .vg-frame__art--7 {
+  background:
+    radial-gradient(circle at 22% 56%, #f5c842 0 4.5%, transparent 9%),
+    radial-gradient(circle at 22% 56%, transparent 0 12%, rgba(245, 200, 66, 0.7) 12% 13.5%, transparent 13.5% 20%, rgba(217, 164, 65, 0.55) 20% 21.5%, transparent 21.5% 28%, rgba(79, 123, 217, 0.5) 28% 29.5%, transparent 29.5% 36%, rgba(79, 123, 217, 0.3) 36% 37%, transparent 37%),
+    repeating-linear-gradient(64deg, transparent 0 12px, rgba(79, 123, 217, 0.28) 12px 14px, transparent 14px 30px),
+    linear-gradient(140deg, #16264e, #0c1733);
+}
+
+/* IX · Vaani & Pay-by-Voice — an Indic waveform: seven impasto bars
+   rising and falling in chrome, ochre and cyan. */
+[data-theme='vangogh'] .vg-frame__art--8 {
+  background:
+    linear-gradient(#4f7bd9, #4f7bd9) 14% 50% / 5% 26% no-repeat,
+    linear-gradient(#f5c842, #f5c842) 26% 50% / 5% 54% no-repeat,
+    linear-gradient(#d9a441, #d9a441) 38% 50% / 5% 38% no-repeat,
+    linear-gradient(#f5c842, #f5c842) 50% 50% / 5% 70% no-repeat,
+    linear-gradient(#d9a441, #d9a441) 62% 50% / 5% 34% no-repeat,
+    linear-gradient(#f5c842, #f5c842) 74% 50% / 5% 56% no-repeat,
+    linear-gradient(#4f7bd9, #4f7bd9) 86% 50% / 5% 22% no-repeat,
+    repeating-linear-gradient(0deg, transparent 0 12px, rgba(26, 42, 82, 0.6) 12px 14px, transparent 14px 30px),
+    linear-gradient(150deg, #13224a, #0c1733);
+}
+
+/* X · Ankan — annotation: two daubs caught in their bounding boxes
+   (chrome and vermilion), the rest of the field still unlabelled. */
+[data-theme='vangogh'] .vg-frame__art--9 {
+  background:
+    radial-gradient(circle at 32% 42%, #4f7bd9 0 8%, transparent 15%),
+    linear-gradient(#16264e, #16264e) 26% 38% / 22% 26% no-repeat,
+    linear-gradient(#f5c842, #f5c842) 26% 38% / 25% 31% no-repeat,
+    radial-gradient(circle at 72% 65%, #d9a441 0 7%, transparent 13%),
+    linear-gradient(#16264e, #16264e) 76% 70% / 18% 22% no-repeat,
+    linear-gradient(#d4502e, #d4502e) 76% 70% / 21% 27% no-repeat,
+    radial-gradient(circle at 84% 22%, rgba(242, 236, 220, 0.5) 0 4%, transparent 9%),
+    radial-gradient(circle at 14% 80%, rgba(242, 236, 220, 0.4) 0 4%, transparent 9%),
+    repeating-linear-gradient(36deg, transparent 0 14px, rgba(79, 123, 217, 0.28) 14px 16px, transparent 16px 36px),
+    linear-gradient(160deg, #16264e, #0c1733);
+}
+
+[data-theme='vangogh'] .vg-frame__plaque {
+  margin-top: clamp(8px, 1vw, 12px);
+  border-radius: 3px;
+  transition: transform var(--dur-base) var(--ease-out-expo);
+}
+
+[data-theme='vangogh'] .vg-frame__link {
+  display: inline-block;
+  margin-top: 8px;
+  margin-right: 14px;
+  font-weight: 700;
+  font-size: var(--step--1);
+  letter-spacing: 0.05em;
+  color: var(--vg-brass-ink); /* 7.1:1 on the ramp floor; underline carries the affordance */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+[data-theme='vangogh'] .vg-frame__link:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Hover: the frame tilts a further degree on top of the item's salon-hang
+   --rot (which lives on the li with the reveal machinery), the canvas
+   brightens, the plaque lifts. */
+[data-theme='vangogh'] .vg-salon__item:hover .vg-frame {
+  transform: rotate(1deg);
+}
+
+[data-theme='vangogh'] .vg-salon__item:hover .vg-frame__art {
+  filter: saturate(1.15) brightness(1.14);
+}
+
+[data-theme='vangogh'] .vg-salon__item:hover .vg-frame__plaque {
+  transform: translateY(-4px);
+}
+
+/* --- ROOM IV · skills: the palette board -------------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg-palette {
+  display: flex;
+  justify-content: center;
+}
+
+[data-theme='vangogh'] .vg-palette__board {
+  position: relative;
+  width: min(100%, 980px);
+  padding: clamp(28px, 4.5vw, 64px) clamp(22px, 4vw, 72px);
+  border-radius: 47% 53% 44% 56% / 16% 22% 18% 20%;
+  background:
+    radial-gradient(120% 90% at 24% 14%, rgba(255, 226, 170, 0.16) 0 30%, transparent 60%),
+    repeating-linear-gradient(
+      97deg,
+      rgba(30, 18, 6, 0.22) 0 3px,
+      transparent 3px 11px
+    ),
+    linear-gradient(118deg, var(--vg-wood-hi), var(--vg-wood-lo));
+  border: 1px solid rgba(18, 10, 2, 0.85);
+  box-shadow:
+    inset 0 2px 6px rgba(255, 230, 180, 0.18),
+    inset 0 -8px 22px rgba(14, 8, 2, 0.5),
+    var(--vg-shadow);
+}
+
+/* The thumb hole. */
+[data-theme='vangogh'] .vg-palette__hole {
+  position: absolute;
+  top: clamp(20px, 4vw, 44px);
+  right: clamp(26px, 5vw, 64px);
+  width: clamp(38px, 5vw, 62px);
+  height: clamp(30px, 4vw, 50px);
+  border-radius: 50% 50% 48% 52% / 55% 55% 45% 45%;
+  background: var(--vg-night);
+  box-shadow:
+    inset 0 4px 10px rgba(0, 0, 0, 0.85),
+    0 1px 0 rgba(255, 230, 180, 0.25);
+}
+
+[data-theme='vangogh'] .vg-daubs {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(22px, 3vw, 36px);
+}
+
+[data-theme='vangogh'] .vg-daubgroup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px 22px;
+}
+
+/* The big paint daubs — one smear per group, each its own pigment.
+   Text colors are tuned per daub for ≥4.5:1 on their smear. */
+[data-theme='vangogh'] .vg-daub {
+  flex: 0 0 auto;
+  min-width: 150px;
+  padding: 14px 24px 15px;
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 30, 'SOFT' 50, 'WONK' 1;
+  font-weight: 640;
+  font-size: var(--step-1);
+  line-height: 1.1;
+  border-radius: 58% 42% 55% 45% / 48% 60% 40% 52%;
+  box-shadow:
+    inset 0 2px 4px rgba(255, 255, 255, 0.35),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.28),
+    0 6px 16px -8px rgba(2, 6, 18, 0.8);
+  transform: rotate(-1.5deg);
+}
+
+[data-theme='vangogh'] .vg-daub--0 {
+  background: radial-gradient(110% 130% at 30% 20%, #ffd95e, var(--vg-yellow) 60%, #d9a92f);
+  color: #241b05;
+}
+
+[data-theme='vangogh'] .vg-daub--1 {
+  background: radial-gradient(110% 130% at 30% 20%, #8fb0e8, #6b93e4 60%, #4f7bd9);
+  color: #0a0f23;
+  transform: rotate(1.2deg);
+}
+
+[data-theme='vangogh'] .vg-daub--2 {
+  background: radial-gradient(110% 130% at 30% 20%, #ecc06a, var(--vg-ochre) 60%, #b4842c);
+  color: #221704;
+}
+
+[data-theme='vangogh'] .vg-daub--3 {
+  background: radial-gradient(110% 130% at 30% 20%, #ea7a52, #dd5c38 60%, #c14826);
+  color: #2a0d03;
+  transform: rotate(1.6deg);
+}
+
+[data-theme='vangogh'] .vg-daub--4 {
+  background: radial-gradient(110% 130% at 30% 20%, #c4d6f5, #a3bff0 55%, #8fb0e8);
+  color: #101c3d;
+}
+
+/* Pigment chips — the colors squeezed out beside each daub. */
+[data-theme='vangogh'] .vg-pigments {
+  flex: 1 1 320px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+[data-theme='vangogh'] .vg-pigment {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: rgba(9, 14, 32, 0.72);
+  border: 1px solid rgba(242, 236, 220, 0.22);
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--vg-ivory);
+}
+
+[data-theme='vangogh'] .vg-pigment i {
+  width: 9px;
+  height: 9px;
+  border-radius: 46% 54% 50% 50% / 52% 48% 56% 44%;
+  background: var(--pc, var(--vg-yellow));
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+/* --- ROOM V · awards: the medals cabinet ----------------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg-medals {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(16px, 2.4vw, 30px);
+}
+
+[data-theme='vangogh'] .vg-medals > li + li {
+  border-top: 1px solid var(--vg-hairline);
+}
+
+[data-theme='vangogh'] .vg-medal {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 10px;
+}
+
+/* Vermilion ribbon — decorative; 'V' notch via clip-path. */
+[data-theme='vangogh'] .vg-medal__ribbon {
+  width: 18px;
+  height: 52px;
+  background: linear-gradient(180deg, #e2643f, var(--vg-verm) 55%, #a83a1c);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 82%, 0 100%);
+  box-shadow: 0 4px 10px -4px rgba(2, 6, 18, 0.8);
+}
+
+[data-theme='vangogh'] .vg-medal__disc {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  /* the numeral's field ends at the plaque floor (#c3a058, 7.1:1 for the
+     ink); --vg-brass-lo is squeezed into the last bevel ring only */
+  background: linear-gradient(
+    150deg,
+    var(--vg-brass-hi),
+    #c3a058 76%,
+    var(--vg-brass-lo)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.7),
+    inset 0 -2px 4px rgba(40, 28, 4, 0.5),
+    0 4px 12px -5px rgba(2, 6, 18, 0.85);
+  font-family: var(--vg-display);
+  font-weight: 640;
+  font-size: 0.95rem;
+  color: var(--vg-brass-ink);
+}
+
+[data-theme='vangogh'] .vg-medal__title {
+  font-family: var(--vg-display);
+  font-variation-settings: 'opsz' 30, 'SOFT' 40;
+  font-weight: 600;
+  font-size: var(--step-1);
+  line-height: 1.2;
+  color: var(--vg-ivory);
+}
+
+[data-theme='vangogh'] .vg-medal__detail {
+  margin-top: 4px;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--vg-ivory-faint);
+  /* the cabinet glass is translucent — a tight halo against bright swirls */
+  text-shadow: 0 1px 4px rgba(5, 9, 24, 0.6);
+}
+
+[data-theme='vangogh'] .vg-awards > .vg-eyebrow {
+  display: block;
+  margin-top: clamp(36px, 5vw, 56px);
+}
+
+[data-theme='vangogh'] .vg-certs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Certification pills hang on the raw sky — the pigment chips' night-glass
+   fill keeps them legible whatever the paint does behind them. */
+[data-theme='vangogh'] .vg-certs li {
+  padding: 7px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--vg-hairline-strong);
+  background: rgba(9, 14, 32, 0.72);
+  font-size: var(--step--1);
+  color: var(--vg-ivory-soft);
+}
+
+/* --- ROOM VI · writing: unfinished studies ------------------------------------------------------------------ */
+
+[data-theme='vangogh'] .vg-studyrow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: clamp(22px, 3.4vw, 40px);
+  align-items: start;
+}
+
+[data-theme='vangogh'] .vg-study {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* The published study — framed and lit from above. */
+[data-theme='vangogh'] .vg-study__frame {
+  position: relative;
+  display: block;
+  padding: clamp(10px, 1.3vw, 16px);
+  background: linear-gradient(
+    128deg,
+    var(--vg-gilt-hi),
+    var(--vg-gilt-mid) 30%,
+    var(--vg-gilt-hi) 52%,
+    var(--vg-gilt-lo) 80%
+  );
+  border: 1px solid rgba(20, 14, 4, 0.85);
+  border-radius: 3px;
+  box-shadow:
+    inset 0 0 0 3px rgba(28, 20, 6, 0.55),
+    var(--vg-shadow);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
+}
+
+[data-theme='vangogh'] .vg-study__frame:hover {
+  transform: rotate(0.8deg) translateY(-4px);
+}
+
+/* The picture light's warm cone. */
+[data-theme='vangogh'] .vg-study__light {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    90% 70% at 50% -6%,
+    rgba(255, 222, 140, 0.4) 0 26%,
+    transparent 68%
+  );
+  mix-blend-mode: screen;
+}
+
+[data-theme='vangogh'] .vg-study__art {
+  display: block;
+  aspect-ratio: 16 / 10;
+  background:
+    radial-gradient(45% 60% at 30% 36%, #4f7bd9 0 24%, transparent 60%),
+    radial-gradient(30% 40% at 74% 24%, #f5c842 0 18%, transparent 52%),
+    repeating-linear-gradient(
+      72deg,
+      transparent 0 10px,
+      rgba(245, 200, 66, 0.18) 10px 12px,
+      transparent 12px 28px
+    ),
+    linear-gradient(165deg, #1a2a52, #0e1a3a);
+  border: 1px solid rgba(20, 14, 4, 0.7);
+}
+
+[data-theme='vangogh'] .vg-study__titlelink {
+  color: inherit;
+  text-decoration: none;
+}
+
+[data-theme='vangogh'] .vg-study__titlelink:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+[data-theme='vangogh'] .vg-study__read {
+  display: inline-block;
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: var(--step--1);
+  color: var(--vg-brass-ink); /* 7.1:1 on the ramp floor; underline carries the affordance */
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+[data-theme='vangogh'] .vg-study__read:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Coming-soon: the canvas turned to face the wall — raw back + stretcher bars. */
+[data-theme='vangogh'] .vg-study__back {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(60, 44, 22, 0.16) 0 2px,
+      transparent 2px 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(60, 44, 22, 0.12) 0 2px,
+      transparent 2px 5px
+    ),
+    linear-gradient(150deg, #b89d72, #97794e);
+  border: 7px solid #6e552f; /* the stretcher's outer frame */
+  box-shadow:
+    inset 0 0 24px rgba(40, 28, 8, 0.5),
+    var(--vg-shadow-soft);
+  overflow: hidden;
+}
+
+[data-theme='vangogh'] .vg-study__bar {
+  position: absolute;
+  background: linear-gradient(180deg, #8a6e42, #6e552f);
+  box-shadow: 0 2px 6px rgba(40, 28, 8, 0.55);
+}
+
+[data-theme='vangogh'] .vg-study__bar--h {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 16px;
+  transform: translateY(-50%);
+}
+
+[data-theme='vangogh'] .vg-study__bar--v {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 16px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #8a6e42, #6e552f);
+}
+
+[data-theme='vangogh'] .vg-study__stamp {
+  position: absolute;
+  top: 14px;
+  right: -34px;
+  padding: 5px 44px;
+  transform: rotate(32deg);
+  background: rgba(150, 32, 8, 0.88);
+  border: 1px dashed rgba(255, 220, 190, 0.65);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  color: #ffe9d6;
+}
+
+/* --- ROOM VII · contact: the guestbook ------------------------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg-contact__inv {
+  font-family: var(--vg-display);
+  font-style: italic;
+  font-variation-settings: 'opsz' 100, 'SOFT' 80, 'WONK' 1;
+  font-weight: 540;
+  font-size: var(--step-4);
+  line-height: 1.08;
+  max-width: 18ch;
+  color: var(--vg-ivory);
+  text-shadow: 0 2px 26px rgba(5, 9, 24, 0.6);
+}
+
+/* The blurb sits raw on the calm-night sky, where chrome strokes still
+   cross behind it — same night halo as the didactics. */
+[data-theme='vangogh'] .vg-contact__blurb {
+  margin-top: 20px;
+  max-width: 58ch;
+  line-height: 1.7;
+  color: var(--vg-ivory-soft);
+  text-shadow:
+    0 1px 4px rgba(5, 9, 24, 0.7),
+    0 2px 26px rgba(5, 9, 24, 0.6);
+}
+
+/* The guestbook signature — handwritten, underlining itself on hover. */
+[data-theme='vangogh'] .vg-contact__email {
+  display: inline-block;
+  margin-top: 26px;
+  font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+  line-height: 1.2;
+  text-decoration: none;
+  background-image: linear-gradient(90deg, var(--vg-yellow), var(--vg-ochre));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  padding-bottom: 6px;
+  transition: background-size 600ms var(--ease-out-expo);
+}
+
+[data-theme='vangogh'] .vg-contact__email:hover,
+[data-theme='vangogh'] .vg-contact__email:focus-visible {
+  background-size: 100% 2px;
+}
+
+[data-theme='vangogh'] .vg-contact__plaques {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: clamp(28px, 4vw, 44px);
+}
+
+/* --- footer: the museum colophon ----------------------------------------------------------------------------------- */
+
+[data-theme='vangogh'] .vg-foot {
+  padding: clamp(40px, 6vw, 64px) var(--vg-gutter) clamp(48px, 7vw, 80px);
+  border-top: 1px solid var(--vg-hairline);
+  text-align: center;
+}
+
+[data-theme='vangogh'] .vg-foot__line {
+  font-size: var(--step--1);
+  letter-spacing: 0.04em;
+  color: var(--vg-ivory-faint);
+}
+
+[data-theme='vangogh'] .vg-foot__line + .vg-foot__line {
+  margin-top: 6px;
+}
+
+[data-theme='vangogh'] .vg-foot__line em {
+  font-family: var(--vg-display);
+  font-style: italic;
+  color: var(--vg-ochre);
+}
+
+[data-theme='vangogh'] .vg-foot__hand {
+  margin-top: 18px;
+  font-size: 1.4rem;
+  transform: rotate(-1.4deg);
+}
+
+/* --- toast (la nuit étoilée) ------------------------------------------------------------------------------------------ */
+
+[data-theme='vangogh'] .vg-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 84px;
+  z-index: 95;
+  transform: translate(-50%, 14px);
+  padding: 12px 26px;
+  border-radius: 4px;
+  background: linear-gradient(168deg, var(--vg-brass-hi), #c3a058);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 240, 200, 0.65),
+    0 14px 36px -12px rgba(2, 6, 18, 0.85);
+  font-family: var(--vg-display);
+  font-style: italic;
+  font-size: var(--step-0);
+  color: var(--vg-brass-ink);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-base) var(--ease-out-expo),
+    transform var(--dur-base) var(--ease-out-expo);
+}
+
+[data-theme='vangogh'] .vg-toast.is-shown {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* --- mobile: one coherent column -------------------------------------------------------------------------------------- */
+
+@media (max-width: 880px) {
+  [data-theme='vangogh'] .vg-mast {
+    height: auto;
+    flex-wrap: wrap;
+    row-gap: 0;
+    padding-block: 10px 8px;
+  }
+
+  [data-theme='vangogh'] .vg-mast__nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  [data-theme='vangogh'] .vg-mast__brand {
+    margin-right: auto;
+  }
+
+  [data-theme='vangogh'] .vg-seal__word {
+    display: none;
+  }
+
+  [data-theme='vangogh'] .vg-seal__wax {
+    width: 36px;
+    height: 36px;
+    font-size: 0.72rem;
+  }
+
+  [data-theme='vangogh'] .vg-hero {
+    padding-top: 130px;
+  }
+
+  [data-theme='vangogh'] .vg-name__word--last {
+    margin-left: clamp(16px, 7vw, 48px);
+  }
+
+  [data-theme='vangogh'] .vg-about__row {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='vangogh'] .vg-portrait {
+    max-width: 280px;
+    margin-inline: auto;
+  }
+
+  [data-theme='vangogh'] .vg-cat li {
+    padding-left: 0;
+    padding-top: 18px;
+  }
+
+  [data-theme='vangogh'] .vg-cat__no {
+    top: 0;
+  }
+
+  [data-theme='vangogh'] .vg-salon {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='vangogh'] .vg-salon__item {
+    grid-column: auto;
+  }
+
+  [data-theme='vangogh'] .vg-palette__board {
+    border-radius: 26px;
+  }
+
+  [data-theme='vangogh'] .vg-medal {
+    grid-template-columns: auto 1fr;
+  }
+
+  [data-theme='vangogh'] .vg-medal__ribbon {
+    display: none;
+  }
+
+  [data-theme='vangogh'] .vg-room__note,
+  [data-theme='vangogh'] .vg-salon__aside,
+  [data-theme='vangogh'] .vg-hero__letter {
+    --rot: 0deg;
+  }
+}
+
+/* --- reduced motion ------------------------------------------------------------------------------------------------------
+   base.css already collapses transition/animation durations globally; these
+   rules remove what duration-squashing alone can't (looping keyframes,
+   resting offsets, per-letter delays, the write-on clips), so the composed
+   static frame reads cleanly and completely. */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='vangogh'] .vg-intro,
+  [data-theme='vangogh'] .vg-reveal {
+    opacity: 1;
+    transform: rotate(var(--rot, 0deg));
+  }
+
+  [data-theme='vangogh'] .vg-write,
+  [data-theme='vangogh'] .vg-write.vg-reveal,
+  [data-theme='vangogh'] .vg.is-mounted .vg-write.vg-intro,
+  [data-theme='vangogh'] .vg-write.vg-reveal.is-in {
+    clip-path: none;
+    transition: none;
+  }
+
+  [data-theme='vangogh'] .vg-hero__cue {
+    opacity: 0;
+  }
+
+  [data-theme='vangogh'] .vg-hero__cue i::after {
+    animation: none;
+  }
+
+  /* Instant swaps: kill the per-letter --kd delays (base.css squashes
+     durations, but transition-delay survives that). */
+  [data-theme='vangogh'] .vg-name__ch {
+    transition: none;
+  }
+
+  [data-theme='vangogh'] .vg-salon__item:hover .vg-frame,
+  [data-theme='vangogh'] .vg-study__frame:hover,
+  [data-theme='vangogh'] .vg-seal:hover .vg-seal__wax,
+  [data-theme='vangogh'] a.vg-plaque--link:hover,
+  [data-theme='vangogh'] .vg-btn:hover {
+    transform: none;
+  }
+
+  [data-theme='vangogh'] .vg-salon__item:hover .vg-frame__plaque {
+    transform: none;
+  }
+
+  [data-theme='vangogh'] .vg-toast {
+    transition: none;
+    transform: translate(-50%, 0);
+  }
+}

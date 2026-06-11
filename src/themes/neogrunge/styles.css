@@ -1,0 +1,1494 @@
+/* ==========================================================================
+   NEOGRUNGE — comic-book panels on aged newsprint.
+   Neo-grunge aesthetic: dark gritty background, loud Bangers display,
+   halftone dots, speed lines, ink splat accents, panel borders.
+   ========================================================================== */
+
+/* --- design tokens --------------------------------------------------------- */
+
+[data-theme='neogrunge'] {
+  --ng-bg:         #111110;       /* near-black canvas */
+  --ng-paper:      #f2ead8;       /* aged newsprint */
+  --ng-ink:        #0d0d0c;       /* dense black */
+  --ng-red:        #e63946;       /* punchy red */
+  --ng-yellow:     #ffd60a;       /* pop yellow */
+  --ng-blue:       #1d3f8a;       /* cobalt blue */
+  --ng-grunge:     #8a8279;       /* mid-tone grunge grey */
+  --ng-border:     3px solid var(--ng-ink);
+  --ng-border-w:   4px;
+
+  /* Override global tokens so shared chrome (toasts, cursor) fits. */
+  --ink:    var(--ng-ink);
+  --paper:  var(--ng-paper);
+  --accent: var(--ng-red);
+
+  font-family: 'Bangers', 'Impact', cursive;
+  letter-spacing: 0.06em;
+}
+
+/* --- global wrapper -------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng {
+  background: var(--ng-bg);
+  color: var(--ng-paper);
+  min-height: 100vh;
+  position: relative;
+}
+
+[data-theme='neogrunge'] .ng.is-mounted {
+  animation: ng-mount-in 500ms cubic-bezier(.16,1,.3,1) both;
+}
+
+[data-theme='neogrunge'] .ng.is-unmounting {
+  animation: ng-mount-in 300ms cubic-bezier(.4,0,1,1) reverse both;
+}
+
+@keyframes ng-mount-in {
+  from { opacity: 0; filter: blur(4px); }
+  to   { opacity: 1; filter: none; }
+}
+
+/* === NEOGRUNGE MOTION SYSTEM =========================================
+   Every section slams in like a comic panel — clip-path wipe, skew, bounce.
+   Speed lines shoot out on mount. Hero name power-slams. Action words pop.
+   ===================================================================== */
+
+@keyframes ng-halftone-pulse {
+  0%, 100% { opacity: 0.7; background-size: 16px 16px; }
+  50%       { opacity: 1;   background-size: 18px 18px; }
+}
+
+/* --- speed lines — shoot out on mount, breathe forever ------------- */
+
+@keyframes ng-speed-shoot {
+  from { transform: rotate(calc(var(--sl) * 22.5deg)) translateY(-50%) scaleX(0); opacity: 0; }
+  to   { transform: rotate(calc(var(--sl) * 22.5deg)) translateY(-50%) scaleX(1); opacity: 1; }
+}
+
+@keyframes ng-speed-breathe {
+  0%, 100% { opacity: 0.06; }
+  50%       { opacity: 0.26; }
+}
+
+[data-theme='neogrunge'] .ng.is-mounted .ng-speedlines span {
+  animation:
+    ng-speed-shoot   0.55s calc(var(--sl) * 28ms) cubic-bezier(.16,1,.3,1) both,
+    ng-speed-breathe 2.8s  calc(0.6s + var(--sl) * 28ms) ease-in-out infinite;
+}
+
+/* --- hero name SLAM entrance ---------------------------------------- */
+@keyframes ng-slam {
+  0%   { opacity: 0; transform: scale(2.6) rotate(-6deg); filter: blur(10px); }
+  55%  { opacity: 1; transform: scale(0.90) rotate(1.4deg); filter: blur(0); }
+  75%  { opacity: 1; transform: scale(1.07) rotate(-0.7deg); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); filter: blur(0); }
+}
+
+[data-theme='neogrunge'] .ng.is-mounted .ng-hero__name {
+  animation: ng-slam 0.85s 250ms cubic-bezier(.16,1,.3,1) both;
+  /* override panel-reveal transition so slam wins */
+  transition: none !important;
+}
+
+/* hero name shake on hover — energy */
+@keyframes ng-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  18%       { transform: rotate(-3deg) scale(1.03); }
+  38%       { transform: rotate(2.5deg) scale(0.97); }
+  56%       { transform: rotate(-2deg) scale(1.02); }
+  74%       { transform: rotate(1.5deg) scale(0.99); }
+}
+
+[data-theme='neogrunge'] .ng-hero__name:hover {
+  animation: ng-shake 0.45s ease-in-out;
+  cursor: default;
+}
+
+/* --- scattered action words ----------------------------------------- */
+@keyframes ng-action-pop {
+  0%   { opacity: 0; transform: rotate(var(--ar, 0deg)) scale(0) skewX(-8deg); }
+  60%  { opacity: 1; transform: rotate(var(--ar, 0deg)) scale(1.18) skewX(2deg); }
+  80%  { transform: rotate(var(--ar, 0deg)) scale(0.93); }
+  100% { opacity: 1; transform: rotate(var(--ar, 0deg)) scale(1); }
+}
+
+[data-theme='neogrunge'] .ng-action {
+  position: absolute;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  user-select: none;
+  left: var(--ax, 10%);
+  top: var(--ay, 20%);
+  z-index: 3;
+  opacity: 0;
+  animation: ng-action-pop 0.6s calc(var(--ad, 0ms)) cubic-bezier(.34,1.56,.64,1) both;
+}
+
+[data-theme='neogrunge'] .ng-action--yellow {
+  font-size: clamp(28px, 5vw, 58px);
+  color: var(--ng-yellow);
+  -webkit-text-stroke: 3px var(--ng-ink);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-action--red {
+  font-size: clamp(22px, 3.8vw, 46px);
+  color: var(--ng-red);
+  -webkit-text-stroke: 2px var(--ng-paper);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 rgba(0,0,0,0.6);
+}
+
+/* --- panel slam reveals — clip-path wipe + skew bounce -------------- */
+@keyframes ng-panel-slam {
+  0%  {
+    opacity: 0;
+    transform: translateY(52px) skewX(-2.5deg) scaleY(0.95);
+    clip-path: inset(0 0 100% 0);
+  }
+  55% { clip-path: inset(0 0 0% 0); }
+  80% { transform: translateY(-4px) skewX(0.5deg) scaleY(1.02); }
+  100%{ opacity: 1; transform: none; clip-path: inset(0 0 0% 0); }
+}
+
+/* --- scroll-reveal --------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-panel-reveal {
+  opacity: 0;
+  transform: translateY(52px) skewX(-2.5deg) scaleY(0.95);
+}
+
+[data-theme='neogrunge'] .ng-panel-reveal.is-in {
+  animation: ng-panel-slam 0.7s calc(var(--pi, 0) * 90ms) cubic-bezier(.16,1,.3,1) both;
+}
+
+/* Ensure settled state after animation */
+[data-theme='neogrunge'] .ng-panel-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- masthead -------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px clamp(16px, 4vw, 48px);
+  background: var(--ng-ink);
+  border-bottom: var(--ng-border);
+  /* Grunge texture via CSS repeating pattern */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.02) 2px,
+      rgba(255,255,255,0.02) 4px
+    );
+}
+
+[data-theme='neogrunge'] .ng-masthead__title {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  line-height: 1;
+}
+
+[data-theme='neogrunge'] .ng-issue-label {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--ng-red);
+  font-family: 'Permanent Marker', cursive;
+  text-transform: uppercase;
+}
+
+[data-theme='neogrunge'] .ng-masthead__name {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(18px, 3vw, 28px);
+  letter-spacing: 0.12em;
+  color: var(--ng-paper);
+  text-shadow: 2px 2px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-masthead__nav {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+[data-theme='neogrunge'] .ng-masthead__nav ul {
+  display: flex;
+  gap: clamp(8px, 2vw, 24px);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+[data-theme='neogrunge'] .ng-masthead__nav a {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(11px, 1.4vw, 15px);
+  letter-spacing: 0.14em;
+  color: var(--ng-grunge);
+  text-decoration: none;
+  transition: color var(--dur-fast) ease;
+}
+
+[data-theme='neogrunge'] .ng-masthead__nav a:hover {
+  color: var(--ng-yellow);
+}
+
+[data-theme='neogrunge'] .ng-masthead__lab {
+  color: var(--ng-red) !important;
+}
+
+[data-theme='neogrunge'] .ng-masthead__resume {
+  text-decoration: none;
+  margin-left: auto;
+}
+
+/* --- burst ornament -------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-burst {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Bangers', cursive;
+  letter-spacing: 0.08em;
+  color: var(--ng-ink);
+  background: var(--ng-yellow);
+  clip-path: polygon(
+    50% 0%, 61% 35%, 98% 35%, 68% 57%,
+    79% 91%, 50% 70%, 21% 91%, 32% 57%,
+    2% 35%, 39% 35%
+  );
+  text-shadow: none;
+}
+
+[data-theme='neogrunge'] .ng-burst--lg {
+  width: clamp(140px, 20vw, 200px);
+  height: clamp(140px, 20vw, 200px);
+  font-size: clamp(16px, 2.5vw, 24px);
+  text-align: center;
+  position: absolute;
+  top: -40px;
+  right: -30px;
+  z-index: 2;
+  animation: ng-burst-spin 8s linear infinite;
+}
+
+[data-theme='neogrunge'] .ng-burst--sm {
+  width: 64px;
+  height: 64px;
+  font-size: 11px;
+  text-align: center;
+}
+
+[data-theme='neogrunge'] .ng-burst--xs {
+  width: 48px;
+  height: 48px;
+  font-size: 9px;
+  text-align: center;
+}
+
+@keyframes ng-burst-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- section containers ---------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-section {
+  padding: clamp(48px, 8vh, 96px) clamp(16px, 5vw, 80px);
+}
+
+[data-theme='neogrunge'] .ng-main {
+  position: relative;
+  z-index: 1;
+}
+
+/* --- panel card (the core layout unit) ------------------------------------- */
+
+[data-theme='neogrunge'] .ng-panel {
+  background: var(--ng-bg);
+  border: var(--ng-border-w) solid var(--ng-paper);
+  border-radius: 0;
+  padding: clamp(24px, 4vw, 56px);
+  position: relative;
+  box-shadow:
+    8px 8px 0 var(--ng-paper),
+    16px 16px 0 color-mix(in srgb, var(--ng-paper) 30%, transparent);
+}
+
+[data-theme='neogrunge'] .ng-panel--wide {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+[data-theme='neogrunge'] .ng-panel--dark {
+  background: var(--ng-ink);
+  border-color: var(--ng-paper);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+[data-theme='neogrunge'] .ng-panel--accent {
+  background: var(--ng-blue);
+  border-color: var(--ng-yellow);
+  box-shadow: 8px 8px 0 var(--ng-yellow);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+[data-theme='neogrunge'] .ng-panel--splash {
+  border: none;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+/* --- panel header ---------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: clamp(24px, 4vh, 48px);
+  padding-bottom: 16px;
+  border-bottom: 3px solid var(--ng-paper);
+}
+
+[data-theme='neogrunge'] .ng-panel--dark .ng-panel__header,
+[data-theme='neogrunge'] .ng-panel--accent .ng-panel__header {
+  border-bottom-color: currentColor;
+}
+
+[data-theme='neogrunge'] .ng-panel__issue {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(24px, 4vw, 40px);
+  color: var(--ng-red);
+  line-height: 1;
+}
+
+[data-theme='neogrunge'] .ng-panel--accent .ng-panel__issue {
+  color: var(--ng-yellow);
+}
+
+[data-theme='neogrunge'] .ng-panel__title {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(28px, 5vw, 56px);
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-shadow: 3px 3px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-panel--dark .ng-panel__title {
+  color: var(--ng-paper);
+}
+
+[data-theme='neogrunge'] .ng-panel--accent .ng-panel__title {
+  color: var(--ng-yellow);
+  text-shadow: 3px 3px 0 var(--ng-ink);
+}
+
+[data-theme='neogrunge'] .ng-panel__rule {
+  flex: 1;
+  height: 3px;
+  background: currentColor;
+}
+
+/* --- hero panel ------------------------------------------------------------ */
+
+[data-theme='neogrunge'] .ng-hero-section {
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme='neogrunge'] .ng-hero__panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: clamp(80px, 12vh, 140px) clamp(24px, 6vw, 96px) clamp(48px, 8vh, 96px);
+  min-height: 100vh;
+  gap: clamp(20px, 3vh, 36px);
+  position: relative;
+}
+
+/* Halftone background texture */
+[data-theme='neogrunge'] .ng-hero__bg-dots {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.22) 2px, transparent 2px);
+  background-size: 16px 16px;
+  pointer-events: none;
+  z-index: 0;
+  animation: ng-halftone-pulse 3.5s ease-in-out infinite;
+  /* Parallax: bg drifts with cursor (opposite to foreground for depth) */
+  translate: calc(var(--cx, 0) * 10px) calc(var(--cy, 0) * 6px);
+  transition: translate 800ms cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme='neogrunge'] .ng-hero__content {
+  position: relative;
+  z-index: 1;
+  max-width: 900px;
+  /* Gentle cursor drift — comic panel depth illusion */
+  translate: calc(var(--cx, 0) * -5px) calc(var(--cy, 0) * -3px);
+  transition: translate 600ms cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme='neogrunge'] .ng-hero__action {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  translate: calc(var(--cx, 0) * -7px) calc(var(--cy, 0) * -4px);
+  transition: translate 700ms cubic-bezier(.16,1,.3,1);
+}
+
+/* --- kicker ---------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-kicker {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+[data-theme='neogrunge'] .ng-kicker__tag,
+[data-theme='neogrunge'] .ng-kicker__city {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(12px, 1.5vw, 16px);
+  letter-spacing: 0.18em;
+  padding: 4px 10px;
+  border: 2px solid;
+}
+
+[data-theme='neogrunge'] .ng-kicker__tag {
+  background: var(--ng-red);
+  color: var(--ng-paper);
+  border-color: var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-kicker__city {
+  color: var(--ng-grunge);
+  border-color: var(--ng-grunge);
+}
+
+/* --- hero name ------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-hero__name {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  line-height: 0.88;
+  transition: transform 200ms cubic-bezier(.34,1.56,.64,1);
+}
+
+[data-theme='neogrunge'] .ng-hero__name:hover {
+  transform: scale(1.01) rotate(-0.5deg);
+}
+
+[data-theme='neogrunge'] .ng-hero__first,
+[data-theme='neogrunge'] .ng-hero__last {
+  display: block;
+  font-family: 'Bangers', cursive;
+  font-size: clamp(64px, 14vw, 180px);
+  letter-spacing: 0.06em;
+  text-shadow:
+    4px 4px 0 var(--ng-red),
+    8px 8px 0 rgba(230,57,70,0.25);
+  transition:
+    letter-spacing 300ms ease,
+    color 300ms ease;
+}
+
+[data-theme='neogrunge'] .ng-hero__last {
+  color: var(--ng-yellow);
+  text-shadow:
+    4px 4px 0 var(--ng-ink),
+    8px 8px 0 rgba(0,0,0,0.4);
+  -webkit-text-stroke: 1.5px var(--ng-paper);
+}
+
+[data-theme='neogrunge'] .ng-hero__name.is-kana .ng-hero__first,
+[data-theme='neogrunge'] .ng-hero__name.is-kana .ng-hero__last {
+  letter-spacing: 0.08em;
+  color: color-mix(in srgb, var(--ng-paper) 80%, var(--ng-red));
+}
+
+/* --- speech bubble --------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-speech {
+  position: relative;
+  background: var(--ng-paper);
+  border: var(--ng-border-w) solid var(--ng-ink);
+  padding: 16px 22px;
+  max-width: 600px;
+  box-shadow: 5px 5px 0 var(--ng-ink);
+}
+
+[data-theme='neogrunge'] .ng-speech__text {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(14px, 1.6vw, 18px);
+  color: var(--ng-ink);
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+/* Tail triangle — pointing top-left toward the name */
+[data-theme='neogrunge'] .ng-speech__tail {
+  position: absolute;
+  top: -22px;
+  left: 40px;
+  width: 0;
+  height: 0;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 22px solid var(--ng-ink);
+}
+
+[data-theme='neogrunge'] .ng-speech__tail::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: -9px;
+  border-left: 9px solid transparent;
+  border-right: 9px solid transparent;
+  border-bottom: 16px solid var(--ng-paper);
+}
+
+/* --- stats row ------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-hero__stats {
+  display: flex;
+  gap: clamp(12px, 2vw, 28px);
+  flex-wrap: wrap;
+}
+
+[data-theme='neogrunge'] .ng-stat {
+  display: flex;
+  flex-direction: column;
+  border-left: 3px solid var(--ng-red);
+  padding-left: 10px;
+  opacity: 0;
+}
+
+@keyframes ng-stat-pop {
+  0%   { opacity: 0; transform: scale(0.5) translateY(16px) rotate(-4deg); }
+  55%  { opacity: 1; transform: scale(1.12) translateY(-4px) rotate(1deg); }
+  80%  { transform: scale(0.96) translateY(2px); }
+  100% { opacity: 1; transform: none; }
+}
+
+[data-theme='neogrunge'] .ng-hero__panel .is-in .ng-stat {
+  animation: ng-stat-pop 0.55s calc(var(--si, 0) * 110ms) cubic-bezier(.34,1.56,.64,1) both;
+}
+
+[data-theme='neogrunge'] .ng-stat__val {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(22px, 3.5vw, 36px);
+  letter-spacing: 0.08em;
+  color: var(--ng-yellow);
+  line-height: 1;
+}
+
+[data-theme='neogrunge'] .ng-stat__label {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 11px;
+  color: var(--ng-grunge);
+  max-width: 120px;
+  line-height: 1.3;
+}
+
+/* --- speed lines ----------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-speedlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+  /* Speedlines lean toward cursor — like the action is coming FROM that direction */
+  rotate: calc(var(--cx, 0) * 4deg);
+  transition: rotate 500ms cubic-bezier(.16,1,.3,1);
+}
+
+[data-theme='neogrunge'] .ng-speedlines span {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200%;
+  height: 1.5px;
+  background: var(--ng-paper);
+  transform-origin: 0 0;
+  opacity: 0;
+}
+
+/* --- buttons --------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  font-family: 'Bangers', cursive;
+  font-size: clamp(14px, 1.6vw, 18px);
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  border: 3px solid var(--ng-paper);
+  color: var(--ng-paper);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    transform 120ms ease;
+}
+
+[data-theme='neogrunge'] .ng-btn:hover {
+  background: var(--ng-paper);
+  color: var(--ng-ink);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-btn--primary {
+  background: var(--ng-red);
+  border-color: var(--ng-red);
+  color: var(--ng-paper);
+}
+
+[data-theme='neogrunge'] .ng-btn--primary:hover {
+  background: var(--ng-paper);
+  color: var(--ng-red);
+  border-color: var(--ng-paper);
+  box-shadow: 4px 4px 0 var(--ng-yellow);
+}
+
+/* --- about section --------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-about__spread {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: clamp(24px, 4vw, 56px);
+  margin-bottom: clamp(32px, 5vh, 56px);
+}
+
+@media (max-width: 760px) {
+  [data-theme='neogrunge'] .ng-about__spread {
+    grid-template-columns: 1fr;
+  }
+}
+
+[data-theme='neogrunge'] .ng-figure {
+  position: relative;
+}
+
+[data-theme='neogrunge'] .ng-figure__frame {
+  border: 4px solid var(--ng-paper);
+  box-shadow: 6px 6px 0 var(--ng-red);
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: color-mix(in srgb, var(--ng-bg) 60%, var(--ng-blue));
+}
+
+[data-theme='neogrunge'] .ng-figure__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: contrast(1.1) saturate(0.7);
+  /* Halftone-ish look */
+  image-rendering: auto;
+}
+
+[data-theme='neogrunge'] .ng-caption {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ng-grunge);
+  margin-top: 8px;
+}
+
+[data-theme='neogrunge'] .ng-about__text p {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(14px, 1.5vw, 17px);
+  line-height: 1.65;
+  color: var(--ng-paper);
+  margin-bottom: 1em;
+  letter-spacing: 0.01em;
+}
+
+/* --- hobbies grid ---------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-hobbies__head {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(20px, 2.5vw, 28px);
+  letter-spacing: 0.12em;
+  color: var(--ng-yellow);
+  margin-bottom: 16px;
+  text-shadow: 2px 2px 0 var(--ng-ink);
+}
+
+[data-theme='neogrunge'] .ng-hobbies__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+[data-theme='neogrunge'] .ng-hobby {
+  background: color-mix(in srgb, var(--ng-paper) 6%, transparent);
+  border: 2px solid var(--ng-grunge);
+  padding: 16px;
+  position: relative;
+}
+
+[data-theme='neogrunge'] .ng-hobby__no {
+  position: absolute;
+  top: -10px;
+  left: 12px;
+  font-family: 'Permanent Marker', cursive;
+  font-size: 13px;
+  color: var(--ng-red);
+  background: var(--ng-bg);
+  padding: 0 4px;
+}
+
+[data-theme='neogrunge'] .ng-hobby__title {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(16px, 2vw, 20px);
+  letter-spacing: 0.1em;
+  color: var(--ng-paper);
+  margin-bottom: 6px;
+}
+
+[data-theme='neogrunge'] .ng-hobby__desc {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-grunge);
+  line-height: 1.5;
+}
+
+/* --- experience issues ----------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+[data-theme='neogrunge'] .ng-issue {
+  border: 3px solid color-mix(in srgb, var(--ng-paper) 25%, transparent);
+  padding: 20px 24px;
+  position: relative;
+  background: color-mix(in srgb, var(--ng-paper) 4%, transparent);
+  transition: border-color var(--dur-fast) ease;
+}
+
+[data-theme='neogrunge'] .ng-issue:hover {
+  border-color: var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-issue__header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+[data-theme='neogrunge'] .ng-issue__badge {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: var(--ng-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme='neogrunge'] .ng-issue__no {
+  font-family: 'Bangers', cursive;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  color: var(--ng-paper);
+}
+
+[data-theme='neogrunge'] .ng-issue__period {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 11px;
+  color: var(--ng-red);
+  letter-spacing: 0.14em;
+  margin-bottom: 4px;
+}
+
+[data-theme='neogrunge'] .ng-issue__company {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(20px, 3vw, 30px);
+  letter-spacing: 0.1em;
+  color: var(--ng-paper);
+  line-height: 1;
+  text-shadow: 2px 2px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-issue__role {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 13px;
+  color: var(--ng-grunge);
+  margin-top: 4px;
+}
+
+[data-theme='neogrunge'] .ng-issue__summary {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(13px, 1.3vw, 15px);
+  color: var(--ng-paper);
+  line-height: 1.55;
+  margin-bottom: 12px;
+  opacity: 0.85;
+}
+
+[data-theme='neogrunge'] .ng-issue__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+}
+
+[data-theme='neogrunge'] .ng-tag {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--ng-yellow);
+  border: 1.5px solid var(--ng-yellow);
+  padding: 3px 8px;
+}
+
+/* --- projects covers ------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+[data-theme='neogrunge'] .ng-cover {
+  background: color-mix(in srgb, var(--ng-paper) 5%, transparent);
+  border: 3px solid var(--ng-paper);
+  padding: 20px;
+  position: relative;
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--ng-paper) 20%, transparent);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+[data-theme='neogrunge'] .ng-cover:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-cover[data-kind='open-source'] {
+  border-color: var(--ng-yellow);
+  box-shadow: 5px 5px 0 color-mix(in srgb, var(--ng-yellow) 30%, transparent);
+}
+
+[data-theme='neogrunge'] .ng-cover[data-kind='open-source']:hover {
+  box-shadow: 7px 7px 0 var(--ng-yellow);
+}
+
+[data-theme='neogrunge'] .ng-cover__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+[data-theme='neogrunge'] .ng-cover__no {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-cover[data-kind='open-source'] .ng-cover__no {
+  color: var(--ng-yellow);
+}
+
+[data-theme='neogrunge'] .ng-cover__kind {
+  font-family: 'Bangers', cursive;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--ng-grunge);
+  background: color-mix(in srgb, var(--ng-grunge) 15%, transparent);
+  padding: 3px 7px;
+}
+
+[data-theme='neogrunge'] .ng-cover__title {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(18px, 2.5vw, 26px);
+  letter-spacing: 0.1em;
+  color: var(--ng-paper);
+  line-height: 1.1;
+  margin-bottom: 6px;
+  text-shadow: 2px 2px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-cover[data-kind='open-source'] .ng-cover__title {
+  text-shadow: 2px 2px 0 var(--ng-yellow);
+}
+
+[data-theme='neogrunge'] .ng-cover__tagline {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-grunge);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+[data-theme='neogrunge'] .ng-cover__desc {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-paper);
+  line-height: 1.55;
+  opacity: 0.8;
+  margin-bottom: 8px;
+}
+
+[data-theme='neogrunge'] .ng-cover__stack {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  color: var(--ng-grunge);
+  margin-top: 8px;
+}
+
+[data-theme='neogrunge'] .ng-cover__link {
+  display: inline-block;
+  font-family: 'Bangers', cursive;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: var(--ng-red);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ng-red);
+  margin-right: 12px;
+  transition: color var(--dur-fast) ease;
+}
+
+[data-theme='neogrunge'] .ng-cover__link:hover {
+  color: var(--ng-yellow);
+  border-color: var(--ng-yellow);
+}
+
+[data-theme='neogrunge'] .ng-cover__feat {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  pointer-events: none;
+}
+
+/* --- skills ---------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-skills__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+[data-theme='neogrunge'] .ng-skill-group {
+  border: 2px solid var(--ng-yellow);
+  padding: 16px;
+}
+
+[data-theme='neogrunge'] .ng-skill-group__name {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(14px, 1.8vw, 18px);
+  letter-spacing: 0.12em;
+  color: var(--ng-yellow);
+  margin-bottom: 10px;
+  text-shadow: 1px 1px 0 var(--ng-ink);
+}
+
+[data-theme='neogrunge'] .ng-skill-group__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+[data-theme='neogrunge'] .ng-skill-tag {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 11px;
+  color: var(--ng-paper);
+  background: color-mix(in srgb, var(--ng-paper) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ng-paper) 25%, transparent);
+  padding: 4px 8px;
+  transition: background-color var(--dur-fast) ease;
+}
+
+[data-theme='neogrunge'] .ng-skill-tag:hover {
+  background: color-mix(in srgb, var(--ng-yellow) 20%, transparent);
+  border-color: var(--ng-yellow);
+}
+
+/* --- awards ---------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-awards__spread {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: clamp(24px, 4vw, 48px);
+}
+
+@media (max-width: 760px) {
+  [data-theme='neogrunge'] .ng-awards__spread {
+    grid-template-columns: 1fr;
+  }
+}
+
+[data-theme='neogrunge'] .ng-laurels {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+[data-theme='neogrunge'] .ng-laurel {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border-left: 4px solid var(--ng-red);
+  padding-left: 14px;
+}
+
+[data-theme='neogrunge'] .ng-laurel__star {
+  font-size: 18px;
+  color: var(--ng-yellow);
+  flex-shrink: 0;
+  line-height: 1.2;
+}
+
+[data-theme='neogrunge'] .ng-laurel p {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(13px, 1.4vw, 16px);
+  color: var(--ng-paper);
+  line-height: 1.5;
+}
+
+[data-theme='neogrunge'] .ng-certs__head {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(16px, 2vw, 20px);
+  letter-spacing: 0.12em;
+  color: var(--ng-yellow);
+  margin-bottom: 12px;
+}
+
+[data-theme='neogrunge'] .ng-certs {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-theme='neogrunge'] .ng-certs li {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-grunge);
+  padding-left: 12px;
+  position: relative;
+}
+
+[data-theme='neogrunge'] .ng-certs li::before {
+  content: '★';
+  position: absolute;
+  left: 0;
+  color: var(--ng-yellow);
+  font-size: 9px;
+  top: 2px;
+}
+
+/* --- writing mysteries ----------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-mysteries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+[data-theme='neogrunge'] .ng-mystery {
+  border: 3px solid color-mix(in srgb, var(--ng-paper) 20%, transparent);
+  background: var(--ng-ink);
+  position: relative;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme='neogrunge'] .ng-mystery--pub {
+  border-color: var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-mystery__cover {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  text-align: center;
+}
+
+[data-theme='neogrunge'] .ng-mystery__link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+[data-theme='neogrunge'] .ng-mystery__title {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(18px, 2.5vw, 26px);
+  letter-spacing: 0.1em;
+  color: var(--ng-paper);
+  text-shadow: 2px 2px 0 var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-mystery__title--hidden {
+  font-size: clamp(40px, 6vw, 64px);
+  color: color-mix(in srgb, var(--ng-paper) 20%, transparent);
+  text-shadow: none;
+}
+
+[data-theme='neogrunge'] .ng-mystery__blurb {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-grunge);
+  line-height: 1.4;
+}
+
+[data-theme='neogrunge'] .ng-mystery__blurb--hidden {
+  color: color-mix(in srgb, var(--ng-grunge) 40%, transparent);
+  letter-spacing: 0.3em;
+  font-size: 10px;
+}
+
+[data-theme='neogrunge'] .ng-mystery__cta {
+  font-family: 'Bangers', cursive;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--ng-red);
+  margin-top: 8px;
+}
+
+[data-theme='neogrunge'] .ng-mystery__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-top: 2px solid color-mix(in srgb, var(--ng-paper) 20%, transparent);
+}
+
+[data-theme='neogrunge'] .ng-mystery__no {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 12px;
+  color: var(--ng-grunge);
+}
+
+/* --- contact section ------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-contact {
+  padding: 0;
+  min-height: 60vh;
+}
+
+[data-theme='neogrunge'] .ng-panel--contact {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: clamp(64px, 10vh, 120px) clamp(24px, 6vw, 96px);
+  gap: clamp(16px, 2.5vh, 28px);
+  position: relative;
+}
+
+[data-theme='neogrunge'] .ng-contact__heading {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(32px, 6vw, 72px);
+  letter-spacing: 0.1em;
+  color: var(--ng-paper);
+  text-shadow:
+    4px 4px 0 var(--ng-red),
+    8px 8px 0 rgba(230,57,70,0.2);
+  max-width: 800px;
+}
+
+[data-theme='neogrunge'] .ng-contact__email {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(20px, 3vw, 36px);
+  letter-spacing: 0.06em;
+  color: var(--ng-yellow);
+  text-decoration: none;
+  text-shadow: 2px 2px 0 var(--ng-ink);
+  transition: color var(--dur-fast) ease;
+}
+
+[data-theme='neogrunge'] .ng-contact__email:hover {
+  color: var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-contact__blurb {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(14px, 1.6vw, 18px);
+  color: var(--ng-grunge);
+  max-width: 500px;
+  line-height: 1.55;
+}
+
+[data-theme='neogrunge'] .ng-contact__links {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* --- Konami BLAMMO! splat overlay ------------------------------------------ */
+
+[data-theme='neogrunge'] .ng-splat {
+  position: fixed;
+  inset: 0;
+  z-index: 160;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-theme='neogrunge'] .ng-splat__svg {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+[data-theme='neogrunge'] .ng-splat__blob {
+  fill: var(--ng-red);
+  opacity: 0;
+  transition: opacity 400ms ease;
+}
+
+[data-theme='neogrunge'] .ng-splat.is-in .ng-splat__blob {
+  opacity: 0.92;
+}
+
+[data-theme='neogrunge'] .ng-splat.is-out .ng-splat__blob {
+  opacity: 0;
+}
+
+[data-theme='neogrunge'] .ng-splat__text {
+  font-family: 'Bangers', cursive;
+  font-size: 72px;
+  letter-spacing: 0.08em;
+  fill: var(--ng-paper);
+  opacity: 0;
+  transition: opacity 300ms ease 100ms;
+}
+
+[data-theme='neogrunge'] .ng-splat.is-in .ng-splat__text {
+  opacity: 1;
+}
+
+/* --- toast ----------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 185;
+  pointer-events: none;
+  font-family: 'Bangers', cursive;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: var(--ng-paper);
+  background: var(--ng-red);
+  border: 3px solid var(--ng-paper);
+  padding: 10px 20px;
+  box-shadow: 4px 4px 0 var(--ng-ink);
+  opacity: 0;
+  translate: 0 8px;
+  transition:
+    opacity 250ms ease,
+    translate 250ms ease;
+  white-space: nowrap;
+}
+
+[data-theme='neogrunge'] .ng-toast.is-on {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* --- footer ---------------------------------------------------------------- */
+
+[data-theme='neogrunge'] .ng-footer {
+  background: var(--ng-ink);
+  border-top: 3px solid color-mix(in srgb, var(--ng-paper) 15%, transparent);
+  padding: clamp(24px, 4vh, 40px) clamp(24px, 5vw, 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+[data-theme='neogrunge'] .ng-footer p {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ng-grunge);
+}
+
+/* --- mobile ---------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  [data-theme='neogrunge'] .ng-masthead {
+    flex-wrap: wrap;
+    padding: 8px clamp(12px, 4vw, 24px);
+    gap: 8px;
+  }
+
+  /* Nav scrolls horizontally on small screens — no overflow, no text clipping. */
+  [data-theme='neogrunge'] .ng-masthead__nav {
+    order: 3;
+    flex-basis: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+
+  [data-theme='neogrunge'] .ng-masthead__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-theme='neogrunge'] .ng-masthead__nav ul {
+    width: max-content;
+    gap: 14px;
+  }
+
+  [data-theme='neogrunge'] .ng-masthead__name {
+    font-size: 22px;
+  }
+
+  [data-theme='neogrunge'] .ng-masthead__resume span {
+    display: none; /* hide text, keep icon/button target */
+  }
+
+  [data-theme='neogrunge'] .ng-hero__name {
+    font-size: clamp(56px, 22vw, 120px);
+  }
+
+  [data-theme='neogrunge'] .ng-speech {
+    max-width: min(340px, 92vw);
+  }
+
+  [data-theme='neogrunge'] .ng-hero__stats {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  [data-theme='neogrunge'] .ng-burst--lg {
+    width: clamp(100px, 28vw, 160px);
+    height: clamp(100px, 28vw, 160px);
+    top: -20px;
+    right: -16px;
+  }
+
+  /* Experience battle records: multi-col → 1-col on mobile */
+  [data-theme='neogrunge'] .ng-issues {
+    grid-template-columns: 1fr;
+  }
+
+  /* Project covers: enforce 1-col on narrow screens */
+  [data-theme='neogrunge'] .ng-covers {
+    grid-template-columns: 1fr;
+  }
+
+  /* Skills: tighter min for 2-col layout on phone */
+  [data-theme='neogrunge'] .ng-skills__grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  [data-theme='neogrunge'] .ng-hobbies__grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+
+  /* Writing mystery covers: 1-col on phone */
+  [data-theme='neogrunge'] .ng-writing .ng-section__grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Contact: hide the large spinning starburst on small screens */
+  [data-theme='neogrunge'] .ng-contact .ng-burst--lg {
+    display: none;
+  }
+
+  /* Action words clutter small screens — hide them */
+  [data-theme='neogrunge'] .ng-action {
+    display: none;
+  }
+}
+
+/* --- reduced motion -------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='neogrunge'] .ng-panel-reveal {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-theme='neogrunge'] .ng-burst--lg,
+  [data-theme='neogrunge'] .ng-hero__bg-dots,
+  [data-theme='neogrunge'] .ng-speedlines span {
+    animation: none;
+    opacity: 0.06;
+  }
+
+  [data-theme='neogrunge'] .ng-stat {
+    animation: none;
+    opacity: 1;
+  }
+
+  [data-theme='neogrunge'] .ng.is-mounted .ng-hero__name {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  [data-theme='neogrunge'] .ng-action {
+    animation: none;
+    opacity: 1;
+  }
+
+  /* Kill cursor drift and scroll parallax offsets under reduced motion */
+  [data-theme='neogrunge'] .ng-hero__bg-dots,
+  [data-theme='neogrunge'] .ng-hero__content,
+  [data-theme='neogrunge'] .ng-hero__action,
+  [data-theme='neogrunge'] .ng-speedlines {
+    translate: none;
+    rotate: none;
+    transition: none;
+  }
+}
+
+/* --- accessibility --------------------------------------------------------- */
+
+[data-theme='neogrunge'] :focus-visible {
+  outline: 3px solid var(--ng-yellow);
+  outline-offset: 3px;
+}
+
+[data-theme='neogrunge'] .ng-btn:focus-visible {
+  outline: 3px solid var(--ng-yellow);
+  outline-offset: 3px;
+}

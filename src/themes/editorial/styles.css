@@ -1,0 +1,2641 @@
+/* ==========================================================================
+   EDITORIAL LIGHT — a printed magazine issue.
+   Warm paper, ink, vermilion, rules, folios. Fraunces (display) + Hanken
+   Grotesk (meta). Every rule is scoped to [data-theme='editorial'].
+   ========================================================================== */
+
+[data-theme='editorial'] {
+  --ed-paper: #ddd0a8;    /* aged newsprint — yellowed stock */
+  --ed-ink: #1a1508;      /* warm press-black, brownish */
+  --ed-ink-soft: #3d3018; /* warm mid-tone, aged secondary ink */
+  --ed-ink-faint: #6a5a36; /* faded ink — 4.8:1 on paper, AA */
+  --ed-verm: #b83318;  /* deep oxidised red, period-press vermilion */
+  --ed-verm-ink: #992b12; /* vermilion small text — 4.9:1 on paper, AA */
+  --ed-rule: rgba(26, 21, 8, 0.36);
+  --ed-rule-faint: rgba(26, 21, 8, 0.18);
+  --ed-rule-hair: rgba(26, 21, 8, 0.10);
+  --ed-serif: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --ed-sans: 'Hanken Grotesk Variable', 'Helvetica Neue', Arial, sans-serif;
+  --ed-pad: clamp(20px, 4.5vw, 76px);
+  --ed-mast-h: 64px;
+  --ed-marquee-dur: 26s;
+}
+
+/* --- global chrome on paper -------------------------------------------------- */
+
+[data-theme='editorial'] ::selection {
+  background: var(--ed-verm);
+  color: var(--ed-paper);
+}
+
+[data-theme='editorial'] :focus-visible {
+  outline: 2px solid var(--ed-verm);
+  outline-offset: 3px;
+}
+
+[data-theme='editorial'] * {
+  scrollbar-color: rgba(26, 21, 8, 0.3) transparent;
+}
+
+[data-theme='editorial'] ::-webkit-scrollbar-thumb {
+  background: rgba(26, 21, 8, 0.3);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Custom cursor: a fountain-pen dot in difference ink; over articles it
+   opens into a reading ring. */
+[data-theme='editorial'] #cursor .cursor-dot {
+  position: relative;
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: #fff;
+  border: 1px solid transparent;
+  mix-blend-mode: difference;
+  transition:
+    transform var(--dur-base) var(--ease-out-back),
+    width var(--dur-base) var(--ease-out-expo),
+    height var(--dur-base) var(--ease-out-expo),
+    margin var(--dur-base) var(--ease-out-expo),
+    background var(--dur-fast) ease,
+    opacity var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] #cursor[data-mode='hover'] .cursor-dot {
+  transform: scale(2.2);
+}
+
+[data-theme='editorial'] #cursor[data-mode='read'] .cursor-dot {
+  width: 58px;
+  height: 58px;
+  margin: -29px 0 0 -29px;
+  background: transparent;
+  border-color: #fff;
+  transform: none;
+}
+
+[data-theme='editorial'] #cursor[data-mode='read'] .cursor-dot::after {
+  content: 'READ';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--ed-sans);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  color: #fff;
+}
+
+/* --- the issue ------------------------------------------------------------------ */
+
+[data-theme='editorial'] .ed {
+  font-family: var(--ed-sans);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ed-ink);
+  opacity: 0;
+  transition: opacity 480ms ease;
+}
+
+[data-theme='editorial'] .ed.is-mounted {
+  opacity: 1;
+}
+
+/* No transform here — a transformed ancestor would re-root the fixed
+   masthead/folio while the page is mid-scroll. */
+[data-theme='editorial'] .ed.is-leaving {
+  opacity: 0;
+  transition: opacity 300ms var(--ease-in-out-cubic);
+}
+
+[data-theme='editorial'] .ed a {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+/* --- reveal choreography ----------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 900ms var(--ease-out-expo),
+    transform 900ms var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+[data-theme='editorial'] .ed-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Heads whose entrance lives in the line masks below — fade only, so the
+   clip-mask slide stays the one piece of motion and reads pronounced. */
+[data-theme='editorial'] .ed-reveal--fade {
+  transform: none;
+}
+
+/* Headline lines slide up under clip masks. */
+[data-theme='editorial'] .ed-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.06em; /* keep descenders inside the mask */
+  margin-bottom: -0.06em;
+}
+
+[data-theme='editorial'] .ed-line__in {
+  display: inline-block;
+  transform: translateY(118%);
+  transition: transform 1150ms var(--ease-out-expo);
+  transition-delay: calc(120ms + var(--i, 0) * 140ms);
+  will-change: transform;
+}
+
+[data-theme='editorial'] .ed-lines.is-in .ed-line__in {
+  transform: none;
+}
+
+/* Clip-mask variant for baseline-aligned heads (sechead/feature/projfeat):
+   clip-path keeps the grid baseline honest where overflow:hidden would
+   re-anchor it to the box bottom. */
+[data-theme='editorial'] .ed-line--clip {
+  overflow: visible;
+  clip-path: inset(-0.25em -0.15em 0 -0.08em);
+}
+
+/* Staggered children inside revealed blocks — dom.ts sets --i per item. */
+[data-theme='editorial'] .ed-toc li,
+[data-theme='editorial'] .ed-cover__stat,
+[data-theme='editorial'] .ed-ad,
+[data-theme='editorial'] .ed-laurel,
+[data-theme='editorial'] .ed-filed li {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 700ms var(--ease-out-expo),
+    transform 700ms var(--ease-out-expo);
+  transition-delay: calc(140ms + var(--i, 0) * 70ms);
+}
+
+[data-theme='editorial'] .ed-toc.is-in li,
+[data-theme='editorial'] .ed-cover__stats.is-in .ed-cover__stat,
+[data-theme='editorial'] .ed-classifieds.is-in .ed-ad,
+[data-theme='editorial'] .ed-laurels.is-in .ed-laurel,
+[data-theme='editorial'] .ed-filedwrap.is-in .ed-filed li {
+  opacity: 1;
+  transform: none;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-reveal,
+[data-theme='editorial'] .ed.is-static .ed-line__in,
+[data-theme='editorial'] .ed.is-static .ed-toc li,
+[data-theme='editorial'] .ed.is-static .ed-cover__stat,
+[data-theme='editorial'] .ed.is-static .ed-ad,
+[data-theme='editorial'] .ed.is-static .ed-laurel,
+[data-theme='editorial'] .ed.is-static .ed-filed li {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+/* --- shared atoms -------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-verm {
+  color: var(--ed-verm);
+}
+
+[data-theme='editorial'] .ed-link-verm {
+  font-family: var(--ed-sans);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ed-verm-ink);
+  text-decoration-color: var(--ed-verm-ink);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-link-verm:hover {
+  background: var(--ed-verm-ink);
+  color: var(--ed-paper);
+  text-decoration: none;
+}
+
+[data-theme='editorial'] .ed-metric {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-soft);
+}
+
+[data-theme='editorial'] .ed-metric b {
+  font-family: var(--ed-serif);
+  font-size: 15px;
+  font-weight: 640;
+  letter-spacing: 0;
+  color: var(--ed-ink);
+}
+
+/* Decorative drifting asterisks. */
+[data-theme='editorial'] .ed-ding {
+  position: absolute;
+  font-family: var(--ed-serif);
+  color: var(--ed-verm);
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-theme='editorial'] .ed-ding--cover {
+  right: 4%;
+  bottom: 26%;
+  font-size: clamp(64px, 8vw, 128px);
+  opacity: 0.92;
+}
+
+[data-theme='editorial'] .ed-ding--awards {
+  left: -1%;
+  bottom: -4%;
+  font-size: clamp(80px, 11vw, 180px);
+  opacity: 0.1;
+}
+
+/* Loose printer's rules drifting in the gutters at their own scroll speeds —
+   cheap, obvious depth against the columns. Desktop only. */
+[data-theme='editorial'] .ed-floatrule {
+  position: absolute;
+  height: 2px;
+  background: var(--ed-verm);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+[data-theme='editorial'] .ed-floatrule--ink {
+  height: 1px;
+  background: var(--ed-rule);
+  opacity: 1;
+}
+
+[data-theme='editorial'] .ed-floatrule--a {
+  right: calc(-0.4 * var(--ed-pad));
+  top: 9%;
+  width: clamp(70px, 9vw, 170px);
+}
+
+[data-theme='editorial'] .ed-floatrule--b {
+  right: calc(-0.25 * var(--ed-pad));
+  top: 12%;
+  width: clamp(46px, 6vw, 120px);
+}
+
+[data-theme='editorial'] .ed-floatrule--c {
+  left: calc(-0.4 * var(--ed-pad));
+  top: 46%;
+  width: clamp(60px, 8vw, 150px);
+}
+
+[data-theme='editorial'] .ed-floatrule--d {
+  right: calc(-0.4 * var(--ed-pad));
+  top: 38%;
+  width: clamp(70px, 9vw, 170px);
+}
+
+[data-theme='editorial'] .ed-floatrule--e {
+  left: calc(-0.35 * var(--ed-pad));
+  top: 24%;
+  width: clamp(50px, 7vw, 130px);
+}
+
+/* --- masthead ---------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-masthead {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+  min-height: var(--ed-mast-h);
+  padding: 0 var(--ed-pad);
+  background: color-mix(in srgb, var(--ed-paper) 88%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--ed-rule);
+  transition: min-height 400ms var(--ease-out-expo);
+}
+
+[data-theme='editorial'] .ed.is-scrolled .ed-masthead {
+  min-height: 52px;
+}
+
+[data-theme='editorial'] .ed-masthead__mark {
+  justify-self: start;
+  font-family: var(--ed-serif);
+  font-size: 19px;
+  font-weight: 720;
+  font-variation-settings: 'opsz' 50;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+[data-theme='editorial'] .ed-masthead__nav ul {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.8vw, 28px);
+}
+
+[data-theme='editorial'] .ed-masthead__nav a {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ed-ink-soft);
+  transition: color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-masthead__nav a:hover {
+  color: var(--ed-ink);
+}
+
+[data-theme='editorial'] .ed-masthead__nav a.is-active {
+  color: var(--ed-verm-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+}
+
+[data-theme='editorial'] .ed-masthead__lab {
+  color: var(--ed-verm-ink) !important;
+  font-style: italic;
+}
+
+[data-theme='editorial'] .ed-masthead__issue {
+  justify-self: end;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+  text-align: right;
+}
+
+[data-theme='editorial'] .ed-masthead__issue a {
+  color: var(--ed-verm-ink);
+  text-decoration: none;
+}
+
+[data-theme='editorial'] .ed-masthead__issue a:hover {
+  text-decoration: underline;
+}
+
+/* --- main column + faint 12-col structure --------------------------------------------------- */
+
+[data-theme='editorial'] .ed-main {
+  position: relative;
+  max-width: 1760px;
+  margin: 0 auto;
+  padding: calc(var(--ed-mast-h) + clamp(28px, 5vh, 64px)) var(--ed-pad) 0;
+}
+
+[data-theme='editorial'] .ed-main::before {
+  content: '';
+  position: absolute;
+  inset: 0 var(--ed-pad);
+  background-image: linear-gradient(
+    to right,
+    var(--ed-rule-hair) 1px,
+    transparent 1px
+  );
+  background-size: calc(100% / 12) 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* --- cover ------------------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-cover {
+  position: relative;
+  min-height: calc(100vh - var(--ed-mast-h));
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-template-rows: auto auto 1fr auto;
+  column-gap: 24px;
+  align-items: start;
+}
+
+[data-theme='editorial'] .ed-cover__kicker {
+  grid-column: 1 / 9;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ed-verm-ink);
+  margin-bottom: clamp(16px, 3vh, 36px);
+}
+
+/* The vermilion bar draws itself in once the kicker enters. */
+[data-theme='editorial'] .ed-kickerbar {
+  width: 64px;
+  height: 2px;
+  background: var(--ed-verm);
+  flex: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1000ms var(--ease-out-expo) 150ms;
+}
+
+[data-theme='editorial'] .ed-cover__kicker.is-in .ed-kickerbar {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-cover__title {
+  grid-column: 1 / 10;
+  grid-row: 2;
+  font-family: var(--ed-serif);
+  font-size: clamp(64px, 11.5vw, 184px);
+  font-weight: 560;
+  font-variation-settings: 'opsz' 144;
+  line-height: 0.88;
+  letter-spacing: -0.025em;
+}
+
+[data-theme='editorial'] .ed-line--italic {
+  font-style: italic;
+  font-weight: 440;
+  margin-left: 0.06em;
+}
+
+/* --- hold-to-flip katakana name (easter egg) ----------------------------------- */
+
+/* Holding the pointer (or hovering >1.2s) flips the name letter-by-letter
+   to ソウビク・ゴーシュ; releasing flips it back. */
+[data-theme='editorial'] .ed-cover__title {
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+[data-theme='editorial'] .ed-name {
+  position: relative;
+  display: inline-block;
+}
+
+[data-theme='editorial'] .ed-name__latin,
+[data-theme='editorial'] .ed-name__kana {
+  display: inline-block;
+  perspective: 700px;
+}
+
+[data-theme='editorial'] .ed-name__ch {
+  display: inline-block;
+  transform-origin: 50% 56%;
+  transition:
+    transform 460ms var(--ease-out-back),
+    opacity 240ms ease;
+  transition-delay: calc(var(--ch, 0) * 55ms);
+}
+
+[data-theme='editorial'] .ed-name__kana {
+  position: absolute;
+  top: 0.05em;
+  left: 0;
+  font-size: 0.88em;
+  font-style: normal;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  color: var(--ed-ink);
+}
+
+[data-theme='editorial'] .ed-name__kana .ed-name__ch {
+  transform: rotateX(-88deg) translateY(0.12em);
+  opacity: 0;
+}
+
+[data-theme='editorial'] .ed-cover__title.is-kana .ed-name__latin .ed-name__ch {
+  transform: rotateX(88deg) translateY(-0.12em);
+  opacity: 0;
+}
+
+[data-theme='editorial'] .ed-cover__title.is-kana .ed-name__kana .ed-name__ch {
+  transform: none;
+  opacity: 1;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-name__ch {
+  transition: none; /* reduced motion: instant swap */
+}
+
+/* The ornament star sits inline after the kana container. When kana flips in
+   the absolute-positioned kana layer can overflow the layout box and overlap
+   it — fade it out in sync with the flip so there is never a collision. */
+[data-theme='editorial'] .ed-cover__star {
+  transition: opacity 300ms ease calc(3 * 55ms);
+  display: inline-block;
+}
+
+[data-theme='editorial'] .ed-cover__title.is-kana .ed-cover__star {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+[data-theme='editorial'] .ed-cover__deckwrap {
+  grid-column: 1 / 7;
+  grid-row: 3;
+  align-self: end;
+  max-width: 56ch;
+  padding: clamp(24px, 5vh, 56px) 0;
+}
+
+[data-theme='editorial'] .ed-cover__deck {
+  font-family: var(--ed-serif);
+  font-size: clamp(17px, 1.6vw, 22px);
+  font-weight: 460;
+  line-height: 1.5;
+}
+
+[data-theme='editorial'] .ed-cover__byline {
+  margin-top: 14px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-cover__byline a {
+  color: var(--ed-verm-ink);
+}
+
+/* contents-style mini index */
+[data-theme='editorial'] .ed-toc {
+  grid-column: 10 / 13;
+  grid-row: 2 / 4;
+  border-top: 3px double var(--ed-ink);
+  padding-top: 14px;
+  margin-top: 0.5em;
+}
+
+[data-theme='editorial'] .ed-toc__head {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 520;
+  margin-bottom: 12px;
+}
+
+[data-theme='editorial'] .ed-toc ol {
+  counter-reset: none;
+}
+
+[data-theme='editorial'] .ed-toc li a {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--ed-rule-faint);
+  text-decoration: none;
+  transition: color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-toc li a:hover {
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-toc__no {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-toc__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+[data-theme='editorial'] .ed-toc__leader {
+  flex: 1;
+  border-bottom: 1px dotted var(--ed-rule);
+  transform: translateY(-3px);
+}
+
+[data-theme='editorial'] .ed-toc__page {
+  font-family: var(--ed-serif);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* The barcode is secretly a button — it prints the colophon receipt. */
+[data-theme='editorial'] .ed-barcode {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-theme='editorial'] .ed-barcode:hover .ed-barcode__text {
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-barcode__bars {
+  height: 34px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ed-ink) 0 2px,
+    transparent 2px 4px,
+    var(--ed-ink) 4px 7px,
+    transparent 7px 9px,
+    var(--ed-ink) 9px 10px,
+    transparent 10px 14px
+  );
+}
+
+[data-theme='editorial'] .ed-barcode__text {
+  font-size: 8.5px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+/* cover stats strip */
+[data-theme='editorial'] .ed-cover__stats {
+  position: relative;
+  grid-column: 1 / 13;
+  grid-row: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: clamp(18px, 3vw, 48px);
+  border-top: 1px solid transparent;
+  padding: 18px 0 clamp(24px, 4vh, 48px);
+}
+
+[data-theme='editorial'] .ed-cover__stats::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ed-ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1200ms var(--ease-out-expo) 200ms;
+}
+
+[data-theme='editorial'] .ed-cover__stats.is-in::before {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-cover__statshead {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ed-ink-soft);
+}
+
+/* Real <ul> of figures (list semantics) laid out like the old flat strip. */
+[data-theme='editorial'] .ed-cover__statlist {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: clamp(18px, 3vw, 48px);
+}
+
+[data-theme='editorial'] .ed-cover__stat {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+[data-theme='editorial'] .ed-cover__statvalue {
+  font-family: var(--ed-serif);
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 640;
+  font-variation-settings: 'opsz' 60;
+}
+
+[data-theme='editorial'] .ed-cover__statlabel {
+  max-width: 16ch;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  color: var(--ed-ink-faint);
+}
+
+/* --- marquee ------------------------------------------------------------------------------------ */
+
+[data-theme='editorial'] .ed-marquee {
+  overflow: hidden;
+  margin: clamp(56px, 9vh, 112px) calc(-1 * var(--ed-pad));
+  padding: 12px 0;
+  border-block: 1px solid var(--ed-rule);
+}
+
+/* Takes the per-frame scroll-velocity surge so the keyframe loop on the
+   track underneath never has to be touched. */
+[data-theme='editorial'] .ed-marquee__kick {
+  will-change: transform;
+}
+
+[data-theme='editorial'] .ed-marquee__track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--ed-verm);
+  animation: ed-marquee var(--ed-marquee-dur) linear infinite;
+}
+
+@keyframes ed-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* WCAG 2.2.2 — hover (or focus within, should the strip ever gain
+   focusables) pauses the loop, mirroring electroform's marquee. */
+[data-theme='editorial'] .ed-marquee:hover .ed-marquee__track,
+[data-theme='editorial'] .ed-marquee:focus-within .ed-marquee__track {
+  animation-play-state: paused;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-marquee__track {
+  animation: none;
+}
+
+/* --- section scaffolding ---------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-section {
+  position: relative;
+  margin-bottom: clamp(96px, 15vh, 200px);
+}
+
+[data-theme='editorial'] .ed-sechead {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 24px;
+  /* transparent keeps the layout; ::before draws the real rule in */
+  border-top: 2px solid transparent;
+  padding-top: 16px;
+  margin-bottom: clamp(36px, 6vh, 72px);
+}
+
+[data-theme='editorial'] .ed-sechead::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--ed-ink);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1100ms var(--ease-out-expo);
+}
+
+[data-theme='editorial'] .ed-sechead.is-in::before {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-sechead__no {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 15px;
+  font-weight: 560;
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-sechead__title {
+  font-family: var(--ed-serif);
+  font-size: clamp(38px, 5.4vw, 76px);
+  font-weight: 620;
+  font-variation-settings: 'opsz' 144;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+[data-theme='editorial'] .ed-sechead__sub {
+  display: inline-block;
+  margin-left: 0.5em;
+  font-size: 0.32em;
+  font-weight: 430;
+  font-style: italic;
+  letter-spacing: 0;
+  color: var(--ed-ink-faint);
+  transform: translateY(-0.35em);
+}
+
+[data-theme='editorial'] .ed-sechead__folio {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ed-ink-faint);
+}
+
+/* --- about: the spread --------------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-about__spread {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 24px;
+}
+
+[data-theme='editorial'] .ed-about__body {
+  grid-column: 1 / 8;
+  font-size: 15.5px;
+  line-height: 1.72;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+[data-theme='editorial'] .ed-about__body p {
+  margin-bottom: 1.4em;
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 800ms var(--ease-out-expo),
+    transform 800ms var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 160ms);
+}
+
+[data-theme='editorial'] .ed-about__body.is-in p,
+[data-theme='editorial'] .ed.is-static .ed-about__body p {
+  opacity: 1;
+  transform: none;
+}
+
+/* Drop cap is a real span (not ::first-letter) so it can settle in with a
+   tiny rotation once the body reveals. */
+[data-theme='editorial'] .ed-dropcap__cap {
+  font-family: var(--ed-serif);
+  font-size: 4.7em;
+  font-weight: 600;
+  font-variation-settings: 'opsz' 144;
+  float: left;
+  line-height: 0.76;
+  padding: 0.06em 0.12em 0 0;
+  color: var(--ed-verm);
+  opacity: 0;
+  transform: rotate(-7deg) translateY(0.06em) scale(0.94);
+  transform-origin: left bottom;
+  transition:
+    opacity 500ms ease 250ms,
+    transform 900ms var(--ease-out-back) 250ms;
+}
+
+[data-theme='editorial'] .ed-about__body.is-in .ed-dropcap__cap {
+  opacity: 1;
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-about__rail {
+  grid-column: 9 / 13;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+[data-theme='editorial'] .ed-figure {
+  border: 1px solid var(--ed-ink);
+  padding: 10px;
+}
+
+/* The frame clips a gentle scale-from-1.06 settle as the figure reveals. */
+[data-theme='editorial'] .ed-figure__frame {
+  overflow: hidden;
+}
+
+[data-theme='editorial'] .ed-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  mix-blend-mode: multiply;
+  filter: grayscale(0.45) contrast(1.08) sepia(0.22);
+  transform: scale(1.06);
+  transition: transform 1400ms var(--ease-out-expo) 100ms;
+}
+
+[data-theme='editorial'] .ed-figure.is-in img {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-figure figcaption {
+  margin-top: 10px;
+  border-top: 1px solid var(--ed-rule-faint);
+  padding-top: 8px;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+/* classified-ads hobbies column */
+[data-theme='editorial'] .ed-classifieds {
+  border: 1.5px solid var(--ed-ink);
+  outline: 1px solid var(--ed-rule);
+  outline-offset: 4px;
+  padding: 20px;
+}
+
+[data-theme='editorial'] .ed-classifieds__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+[data-theme='editorial'] .ed-classifieds__head::before,
+[data-theme='editorial'] .ed-classifieds__head::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--ed-rule);
+}
+
+[data-theme='editorial'] .ed-ad {
+  padding: 16px 0;
+  border-bottom: 1px dashed var(--ed-rule);
+}
+
+[data-theme='editorial'] .ed-ad:last-child {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+
+[data-theme='editorial'] .ed-ad__head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+[data-theme='editorial'] .ed-ad__no {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-ad__arcana {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+
+[data-theme='editorial'] .ed-ad__title {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 19px;
+  font-weight: 500;
+  margin: 4px 0 6px;
+}
+
+[data-theme='editorial'] .ed-ad__desc {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--ed-ink-soft);
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+/* The hidden classified — redaction bars lift on hover/focus (easter egg).
+   The copy is real text throughout, so screen readers and find-in-page see
+   it regardless of the visual bars. */
+[data-theme='editorial'] .ed-ad--hidden {
+  cursor: help;
+}
+
+[data-theme='editorial'] .ed-redact {
+  background: var(--ed-ink);
+  color: transparent;
+  padding: 0 0.18em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition:
+    background-color 450ms ease,
+    color 450ms ease;
+}
+
+[data-theme='editorial'] .ed-redact a {
+  color: transparent;
+  text-decoration-color: transparent;
+  transition:
+    color 450ms ease,
+    text-decoration-color 450ms ease;
+}
+
+[data-theme='editorial'] .ed-ad--hidden:hover .ed-redact,
+[data-theme='editorial'] .ed-ad--hidden:focus .ed-redact,
+[data-theme='editorial'] .ed-ad--hidden:focus-within .ed-redact {
+  background: transparent;
+  color: inherit;
+}
+
+[data-theme='editorial'] .ed-ad--hidden:hover .ed-redact a,
+[data-theme='editorial'] .ed-ad--hidden:focus .ed-redact a,
+[data-theme='editorial'] .ed-ad--hidden:focus-within .ed-redact a {
+  color: var(--ed-verm-ink);
+  text-decoration-color: var(--ed-verm-ink);
+}
+
+/* --- experience: numbered features ------------------------------------------------------------------------ */
+
+[data-theme='editorial'] .ed-feature {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 24px;
+  padding: clamp(40px, 7vh, 88px) 0;
+  border-top: 1px solid var(--ed-rule);
+}
+
+[data-theme='editorial'] .ed-feature:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+[data-theme='editorial'] .ed-feature__ghost {
+  position: absolute;
+  top: -0.04em;
+  right: 0;
+  z-index: 0;
+  font-family: var(--ed-serif);
+  font-size: clamp(160px, 24vw, 380px);
+  font-weight: 270;
+  font-variation-settings: 'opsz' 144;
+  line-height: 1;
+  color: rgba(26, 21, 8, 0.07);
+  pointer-events: none;
+  user-select: none;
+}
+
+[data-theme='editorial'] .ed-feature__head {
+  grid-column: 1 / 9;
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme='editorial'] .ed-feature__kicker {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: var(--ed-verm-ink);
+  margin-bottom: 10px;
+}
+
+[data-theme='editorial'] .ed-feature__title {
+  font-family: var(--ed-serif);
+  font-size: clamp(44px, 6.6vw, 96px);
+  font-weight: 640;
+  font-variation-settings: 'opsz' 144;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+}
+
+[data-theme='editorial'] .ed-feature__meta {
+  grid-column: 9 / 13;
+  grid-row: 1 / 3;
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  border-left: 1px solid var(--ed-rule);
+  padding-left: 24px;
+  margin-top: 0.6em;
+}
+
+[data-theme='editorial'] .ed-feature__meta dl div {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--ed-rule-faint);
+}
+
+[data-theme='editorial'] .ed-feature__meta dt {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-feature__meta dd {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[data-theme='editorial'] .ed-feature__summary {
+  margin-top: 16px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ed-ink-soft);
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+[data-theme='editorial'] .ed-feature__body {
+  grid-column: 1 / 9;
+  position: relative;
+  z-index: 1;
+  margin-top: clamp(28px, 4vh, 48px);
+}
+
+/* pull-quote highlights */
+[data-theme='editorial'] .ed-pull {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+[data-theme='editorial'] .ed-pull__mark {
+  font-family: var(--ed-serif);
+  font-size: 22px;
+  color: var(--ed-verm);
+  line-height: 1.2;
+}
+
+[data-theme='editorial'] .ed-pull p {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: clamp(19px, 2vw, 27px);
+  font-weight: 480;
+  line-height: 1.35;
+}
+
+/* dossier list */
+[data-theme='editorial'] .ed-filedwrap {
+  position: relative;
+  margin-top: clamp(28px, 4vh, 44px);
+  border-top: 1px solid transparent;
+  padding-top: 18px;
+}
+
+[data-theme='editorial'] .ed-filedwrap::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ed-rule);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1000ms var(--ease-out-expo) 100ms;
+}
+
+[data-theme='editorial'] .ed-filedwrap.is-in::before {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-filed__head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+  margin-bottom: 18px;
+}
+
+[data-theme='editorial'] .ed-filed {
+  columns: 2;
+  column-gap: 40px;
+}
+
+[data-theme='editorial'] .ed-filed li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  break-inside: avoid;
+  padding-bottom: 18px;
+}
+
+[data-theme='editorial'] .ed-filed__no {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-filed__name {
+  font-weight: 750;
+  font-size: 14.5px;
+}
+
+[data-theme='editorial'] .ed-filed__tag {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ed-ink-faint);
+  margin: 2px 0 4px;
+}
+
+[data-theme='editorial'] .ed-filed__note {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--ed-ink-soft);
+}
+
+[data-theme='editorial'] .ed-filed__stack {
+  margin-top: 5px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+/* --- projects --------------------------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-projfeats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: clamp(48px, 7vh, 88px);
+}
+
+[data-theme='editorial'] .ed-projfeat {
+  border: 1px solid var(--ed-ink);
+  padding: clamp(24px, 3vw, 44px);
+  background: color-mix(in srgb, var(--ed-paper) 50%, transparent);
+}
+
+[data-theme='editorial'] .ed-projfeat__kicker {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: var(--ed-verm-ink);
+  margin-bottom: 14px;
+}
+
+[data-theme='editorial'] .ed-projfeat__name {
+  font-family: var(--ed-serif);
+  font-size: clamp(40px, 4.6vw, 68px);
+  font-weight: 520;
+  font-variation-settings: 'opsz' 144;
+  line-height: 0.95;
+  margin-bottom: 12px;
+}
+
+[data-theme='editorial'] .ed-projfeat__name em {
+  font-style: italic;
+  font-weight: 460;
+}
+
+[data-theme='editorial'] .ed-projfeat__tagline {
+  font-family: var(--ed-serif);
+  font-size: 18px;
+  font-weight: 540;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+[data-theme='editorial'] .ed-projfeat__desc {
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--ed-ink-soft);
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  margin-bottom: 16px;
+}
+
+[data-theme='editorial'] .ed-projfeat__points li {
+  position: relative;
+  padding: 6px 0 6px 22px;
+  font-size: 13px;
+  line-height: 1.55;
+  border-top: 1px solid var(--ed-rule-faint);
+}
+
+[data-theme='editorial'] .ed-projfeat__points li::before {
+  content: '✳';
+  position: absolute;
+  left: 0;
+  top: 7px;
+  font-size: 11px;
+  color: var(--ed-verm);
+}
+
+[data-theme='editorial'] .ed-projfeat__stack {
+  margin-top: 14px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-projfeat__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  border-top: 1px solid var(--ed-rule);
+  padding-top: 16px;
+}
+
+[data-theme='editorial'] .ed-projfeat__foot .ed-link-verm {
+  padding: 4px 8px;
+  border: 1.5px solid var(--ed-verm);
+  text-decoration: none;
+}
+
+/* editorial index table */
+[data-theme='editorial'] .ed-index__head {
+  display: grid;
+  grid-template-columns: 56px 1.1fr 1.7fr 1fr 90px 40px;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--ed-ink);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-row {
+  border-bottom: 1px solid var(--ed-rule);
+}
+
+[data-theme='editorial'] .ed-row__head {
+  display: grid;
+  grid-template-columns: 56px 1.1fr 1.7fr 1fr 90px 40px;
+  gap: 16px;
+  align-items: baseline;
+  width: 100%;
+  padding: 18px 0;
+  text-align: left;
+  transition: background-color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-row__head:hover {
+  background: color-mix(in srgb, var(--ed-verm) 5%, transparent);
+}
+
+[data-theme='editorial'] .ed-row__no {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-row__name {
+  font-family: var(--ed-serif);
+  font-size: clamp(18px, 1.8vw, 24px);
+  font-weight: 620;
+  line-height: 1.15;
+}
+
+[data-theme='editorial'] .ed-row__tagline {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ed-ink-soft);
+}
+
+[data-theme='editorial'] .ed-row__stack {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-row__kind {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-row.is-open .ed-row__kind,
+[data-theme='editorial'] .ed-row__head:hover .ed-row__kind {
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-row__plus {
+  font-family: var(--ed-serif);
+  font-size: 20px;
+  line-height: 1;
+  justify-self: end;
+  color: var(--ed-verm);
+  transition: transform 500ms var(--ease-out-expo);
+}
+
+[data-theme='editorial'] .ed-row.is-open .ed-row__plus {
+  transform: rotate(45deg);
+}
+
+[data-theme='editorial'] .ed-row__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  /* visibility keeps collapsed copy out of the a11y/find-in-page tree;
+     the 600ms delay lets the row finish folding before content vanishes
+     (same pattern as electroform's .ef-expand) */
+  visibility: hidden;
+  transition:
+    grid-template-rows 600ms var(--ease-out-expo),
+    visibility 0s 600ms;
+}
+
+[data-theme='editorial'] .ed-row.is-open .ed-row__panel {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition-delay: 0s, 0s;
+}
+
+[data-theme='editorial'] .ed-row__panelin {
+  overflow: hidden;
+  min-height: 0;
+}
+
+[data-theme='editorial'] .ed-row__desc {
+  max-width: 70ch;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ed-ink-soft);
+  margin: 4px 0 14px 72px;
+}
+
+[data-theme='editorial'] .ed-row__points {
+  margin-left: 72px;
+  max-width: 70ch;
+}
+
+[data-theme='editorial'] .ed-row__points li {
+  position: relative;
+  padding: 4px 0 4px 20px;
+  font-size: 13px;
+}
+
+[data-theme='editorial'] .ed-row__points li::before {
+  content: '✳';
+  position: absolute;
+  left: 0;
+  top: 5px;
+  font-size: 10px;
+  color: var(--ed-verm);
+}
+
+[data-theme='editorial'] .ed-row__fullstack {
+  margin: 12px 0 0 72px;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-row__metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin: 12px 0 0 72px;
+}
+
+[data-theme='editorial'] .ed-row__panelin > :last-child {
+  margin-bottom: 26px;
+}
+
+/* --- skills: working type specimen ---------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-specimen {
+  position: relative;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 14px 36px;
+  align-items: baseline;
+  border-top: 1px solid transparent;
+  padding: clamp(24px, 4vh, 40px) 0;
+}
+
+[data-theme='editorial'] .ed-specimen::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ed-rule);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1000ms var(--ease-out-expo)
+    calc(100ms + var(--i, 0) * 90ms);
+}
+
+[data-theme='editorial'] .ed-specimen.is-in::before {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-specimen__label h3 {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+[data-theme='editorial'] .ed-specimen__label span {
+  display: block;
+  margin-top: 6px;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+[data-theme='editorial'] .ed-specimen__line {
+  line-height: 1.18;
+  overflow-wrap: break-word;
+}
+
+[data-theme='editorial'] .ed-specimen__sep {
+  color: var(--ed-verm);
+  font-style: normal;
+  font-weight: 400;
+}
+
+[data-theme='editorial'] .ed-specimen[data-style='0'] .ed-specimen__line {
+  font-family: var(--ed-serif);
+  font-size: clamp(30px, 4.4vw, 62px);
+  font-weight: 870;
+  font-variation-settings: 'opsz' 144;
+  letter-spacing: -0.015em;
+}
+
+[data-theme='editorial'] .ed-specimen[data-style='1'] .ed-specimen__line {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: clamp(26px, 3.8vw, 54px);
+  font-weight: 340;
+  font-variation-settings: 'opsz' 144, 'SOFT' 100;
+}
+
+[data-theme='editorial'] .ed-specimen[data-style='2'] .ed-specimen__line {
+  font-family: var(--ed-sans);
+  font-size: clamp(22px, 3vw, 40px);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+[data-theme='editorial'] .ed-specimen[data-style='3'] .ed-specimen__line {
+  font-family: var(--ed-serif);
+  font-size: clamp(26px, 3.6vw, 50px);
+  font-weight: 600;
+  font-variation-settings: 'opsz' 144, 'WONK' 1;
+}
+
+[data-theme='editorial'] .ed-specimen[data-style='4'] .ed-specimen__line {
+  font-family: var(--ed-sans);
+  font-size: clamp(17px, 2.2vw, 26px);
+  font-weight: 430;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* --- awards: laurels ---------------------------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-awards__spread {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: 24px;
+}
+
+[data-theme='editorial'] .ed-laurels {
+  grid-column: 1 / 8;
+}
+
+[data-theme='editorial'] .ed-laurel {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 18px;
+  padding: clamp(18px, 3vh, 28px) 0;
+  border-bottom: 1px solid transparent;
+}
+
+[data-theme='editorial'] .ed-laurel::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--ed-rule);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 900ms var(--ease-out-expo)
+    calc(220ms + var(--i, 0) * 70ms);
+}
+
+[data-theme='editorial'] .ed-laurels.is-in .ed-laurel::after {
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-laurel__mark {
+  font-family: var(--ed-serif);
+  font-size: 24px;
+  line-height: 1.2;
+  color: var(--ed-verm);
+}
+
+[data-theme='editorial'] .ed-laurel p {
+  font-family: var(--ed-serif);
+  font-size: clamp(19px, 2.2vw, 28px);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+[data-theme='editorial'] .ed-awards__rail {
+  grid-column: 9 / 13;
+  border-left: 1px solid var(--ed-rule);
+  padding-left: 24px;
+}
+
+[data-theme='editorial'] .ed-awards__rail h3 {
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+  margin: 26px 0 12px;
+}
+
+[data-theme='editorial'] .ed-awards__rail h3:first-child {
+  margin-top: 0.4em;
+}
+
+[data-theme='editorial'] .ed-certs {
+  counter-reset: ed-cert;
+}
+
+[data-theme='editorial'] .ed-certs li {
+  counter-increment: ed-cert;
+  padding: 6px 0 6px 30px;
+  text-indent: -30px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--ed-rule-faint);
+}
+
+[data-theme='editorial'] .ed-certs li::before {
+  content: counter(ed-cert, decimal-leading-zero) ' ';
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ed-verm-ink);
+  padding-right: 10px;
+}
+
+[data-theme='editorial'] .ed-edu li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ed-rule-faint);
+}
+
+[data-theme='editorial'] .ed-edu b {
+  display: block;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+[data-theme='editorial'] .ed-edu span {
+  display: block;
+  font-size: 12.5px;
+  color: var(--ed-ink-soft);
+}
+
+[data-theme='editorial'] .ed-eduperiod {
+  margin-top: 2px;
+  font-size: 9.5px !important;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint) !important;
+}
+
+/* --- writing: forthcoming ---------------------------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-teasers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+[data-theme='editorial'] .ed-teaser {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  border: 1px solid var(--ed-ink);
+  padding: 26px;
+}
+
+[data-theme='editorial'] .ed-teaser__no {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 26px;
+  color: var(--ed-verm);
+  margin-bottom: 14px;
+}
+
+[data-theme='editorial'] .ed-teaser__title {
+  font-family: var(--ed-serif);
+  font-size: clamp(22px, 2.2vw, 30px);
+  font-weight: 600;
+  font-variation-settings: 'opsz' 90;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+[data-theme='editorial'] .ed-teaser__blurb {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ed-ink-soft);
+}
+
+[data-theme='editorial'] .ed-teaser__stamp {
+  position: absolute;
+  top: 18px;
+  right: -10px;
+  padding: 5px 12px;
+  border: 2px solid var(--ed-verm);
+  border-radius: 2px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  color: var(--ed-verm-ink);
+  transform: rotate(7deg);
+  background: var(--ed-paper);
+}
+
+[data-theme='editorial'] .ed-teaser__folio {
+  margin-top: 20px;
+  border-top: 1px solid var(--ed-rule-faint);
+  padding-top: 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--ed-ink-faint);
+}
+
+/* Published entry — a real page in the issue, with a Read affordance. */
+[data-theme='editorial'] .ed-teaser__stamp--pub {
+  border-color: var(--ed-verm-ink);
+  background: var(--ed-verm-ink);
+  color: var(--ed-paper);
+  transform: rotate(-5deg);
+}
+
+[data-theme='editorial'] .ed-teaser__read {
+  margin-top: 16px;
+  align-self: flex-start;
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 16px;
+  font-weight: 520;
+  color: var(--ed-verm-ink);
+  text-decoration-color: var(--ed-verm-ink);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-teaser__read:hover {
+  background: var(--ed-verm-ink);
+  color: var(--ed-paper);
+  text-decoration: none;
+}
+
+[data-theme='editorial'] .ed-teaser--pub .ed-teaser__folio {
+  color: var(--ed-verm-ink);
+}
+
+/* --- colophon ------------------------------------------------------------------------------------------------------------ */
+
+[data-theme='editorial'] .ed-colophon__heading {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: clamp(24px, 2.8vw, 40px);
+  font-weight: 480;
+  max-width: 24ch;
+  margin-bottom: clamp(24px, 4vh, 44px);
+}
+
+[data-theme='editorial'] .ed-colophon__email {
+  display: block;
+  text-decoration: none;
+  margin-bottom: clamp(24px, 4vh, 44px);
+}
+
+[data-theme='editorial'] .ed-colophon__email .ed-line__in {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: clamp(26px, 5.6vw, 92px);
+  font-weight: 450;
+  font-variation-settings: 'opsz' 144;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  transition: color var(--dur-base) ease;
+}
+
+[data-theme='editorial'] .ed-colophon__email:hover .ed-line__in {
+  color: var(--ed-verm);
+  text-decoration: underline;
+  text-decoration-thickness: 0.04em;
+  text-underline-offset: 0.12em;
+}
+
+[data-theme='editorial'] .ed-colophon__blurb {
+  max-width: 60ch;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--ed-ink-soft);
+  margin-bottom: clamp(28px, 5vh, 52px);
+}
+
+[data-theme='editorial'] .ed-colophon__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: clamp(18px, 2.5vw, 36px);
+}
+
+/* the vermilion stamp */
+[data-theme='editorial'] .ed-stamp {
+  display: inline-block;
+  padding: 14px 26px;
+  border: 2px solid var(--ed-verm);
+  outline: 1px solid var(--ed-verm);
+  outline-offset: 3px;
+  border-radius: 2px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ed-verm-ink);
+  transform: rotate(-1.6deg);
+  transition:
+    background-color var(--dur-base) ease,
+    color var(--dur-base) ease,
+    transform var(--dur-base) var(--ease-out-back);
+}
+
+[data-theme='editorial'] .ed-stamp:hover {
+  background: var(--ed-verm-ink);
+  color: var(--ed-paper);
+  transform: rotate(0deg);
+}
+
+[data-theme='editorial'] .ed-colophon__lab {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 17px;
+  font-weight: 520;
+  color: var(--ed-ink);
+  transition: color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-colophon__lab:hover {
+  color: var(--ed-verm-ink);
+}
+
+/* --- footer colophon credits ------------------------------------------------------------------------------------------------ */
+
+[data-theme='editorial'] .ed-footer {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  justify-content: space-between;
+  gap: 12px 32px;
+  margin: 0 var(--ed-pad);
+  max-width: 1760px;
+  border-top: 3px double var(--ed-ink);
+  padding: 22px 0 56px;
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ed-ink-faint);
+}
+
+@media (min-width: 1912px) {
+  [data-theme='editorial'] .ed-footer {
+    margin: 0 auto;
+  }
+}
+
+/* --- live folio ---------------------------------------------------------------------------------------------------------------- */
+
+[data-theme='editorial'] .ed-folio-live {
+  position: fixed;
+  right: 18px;
+  bottom: 16px;
+  z-index: 55;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  overflow: hidden; /* clips the odometer tick */
+  padding: 7px 12px;
+  border: 1px solid var(--ed-rule);
+  background: color-mix(in srgb, var(--ed-paper) 85%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 600ms ease 400ms,
+    transform 600ms var(--ease-out-expo) 400ms;
+}
+
+[data-theme='editorial'] .ed.is-mounted .ed-folio-live {
+  opacity: 1;
+  transform: none;
+}
+
+[data-theme='editorial'] .ed-folio-live__page {
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--ed-verm-ink);
+}
+
+[data-theme='editorial'] .ed-folio-live__label {
+  color: var(--ed-ink-faint);
+}
+
+/* Page number ticks in like an odometer as sections pass. */
+[data-theme='editorial'] .ed-folio-live__page.is-tick {
+  animation: ed-folio-tick 460ms var(--ease-out-expo);
+}
+
+@keyframes ed-folio-tick {
+  from {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* --- colophon receipt modal (barcode easter egg) -------------------------------- */
+
+[data-theme='editorial'] .ed-receipt {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+[data-theme='editorial'] .ed-receipt[hidden] {
+  display: none;
+}
+
+[data-theme='editorial'] .ed-receipt__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 21, 8, 0.5);
+}
+
+[data-theme='editorial'] .ed-receipt__card {
+  position: relative;
+  width: min(360px, 100%);
+  max-height: min(82vh, 680px);
+  overflow-y: auto;
+  background: #e8ddc0;
+  padding: 26px 24px 34px;
+  box-shadow: 0 24px 60px rgba(26, 21, 8, 0.4);
+  font-family: ui-monospace, 'SF Mono', Menlo, 'Courier New', monospace;
+  font-size: 11px;
+  line-height: 1.7;
+  letter-spacing: 0.08em;
+  color: var(--ed-ink);
+  animation: ed-receipt-print 480ms var(--ease-out-expo);
+  /* torn till-roll bottom edge */
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 7px),
+    95% 100%,
+    90% calc(100% - 7px),
+    85% 100%,
+    80% calc(100% - 7px),
+    75% 100%,
+    70% calc(100% - 7px),
+    65% 100%,
+    60% calc(100% - 7px),
+    55% 100%,
+    50% calc(100% - 7px),
+    45% 100%,
+    40% calc(100% - 7px),
+    35% 100%,
+    30% calc(100% - 7px),
+    25% 100%,
+    20% calc(100% - 7px),
+    15% 100%,
+    10% calc(100% - 7px),
+    5% 100%,
+    0 calc(100% - 7px)
+  );
+}
+
+@keyframes ed-receipt-print {
+  from {
+    opacity: 0;
+    transform: translateY(26px) rotate(1.2deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+[data-theme='editorial'] .ed-receipt__shop {
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-align: center;
+}
+
+[data-theme='editorial'] .ed-receipt__title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-align: center;
+  margin: 6px 0 4px;
+}
+
+[data-theme='editorial'] .ed-receipt__rule {
+  border-top: 1px dashed var(--ed-rule);
+  margin: 12px 0;
+}
+
+[data-theme='editorial'] .ed-receipt__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+[data-theme='editorial'] .ed-receipt__dots {
+  flex: 1;
+  border-bottom: 1px dotted var(--ed-rule);
+}
+
+[data-theme='editorial'] .ed-receipt__thanks {
+  margin: 14px 0 12px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+}
+
+[data-theme='editorial'] .ed-receipt__bars {
+  display: block;
+  width: 70%;
+  height: 30px;
+  margin: 0 auto 18px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--ed-ink) 0 2px,
+    transparent 2px 4px,
+    var(--ed-ink) 4px 7px,
+    transparent 7px 9px,
+    var(--ed-ink) 9px 10px,
+    transparent 10px 14px
+  );
+}
+
+[data-theme='editorial'] .ed-receipt__close {
+  display: block;
+  margin: 0 auto;
+  padding: 9px 18px;
+  border: 1.5px solid var(--ed-ink);
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-ink);
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+[data-theme='editorial'] .ed-receipt__close:hover {
+  background: var(--ed-ink);
+  color: var(--ed-paper);
+}
+
+/* --- PROOF mode (Konami easter egg) ----------------------------------------------- */
+
+/* Three seconds of press-check: registration + crop marks, a colour bar and
+   a MISPRINT stamp slammed over the page; then the issue settles back. */
+[data-theme='editorial'] .ed-proof {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: none;
+  pointer-events: none;
+}
+
+[data-theme='editorial'] .ed.is-proof .ed-proof {
+  display: block;
+}
+
+[data-theme='editorial'] .ed-proof__reg {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 1.5px solid var(--ed-ink);
+  border-radius: 50%;
+  animation: ed-proof-in 260ms ease both;
+}
+
+[data-theme='editorial'] .ed-proof__reg::before,
+[data-theme='editorial'] .ed-proof__reg::after {
+  content: '';
+  position: absolute;
+  background: var(--ed-ink);
+}
+
+[data-theme='editorial'] .ed-proof__reg::before {
+  left: 50%;
+  top: -6px;
+  bottom: -6px;
+  width: 1.5px;
+  transform: translateX(-50%);
+}
+
+[data-theme='editorial'] .ed-proof__reg::after {
+  top: 50%;
+  left: -6px;
+  right: -6px;
+  height: 1.5px;
+  transform: translateY(-50%);
+}
+
+[data-theme='editorial'] .ed-proof__reg--tl {
+  top: 16px;
+  left: 16px;
+}
+
+[data-theme='editorial'] .ed-proof__reg--tr {
+  top: 16px;
+  right: 16px;
+}
+
+[data-theme='editorial'] .ed-proof__reg--bl {
+  bottom: 16px;
+  left: 16px;
+}
+
+[data-theme='editorial'] .ed-proof__reg--br {
+  bottom: 16px;
+  right: 16px;
+}
+
+[data-theme='editorial'] .ed-proof__crop {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: 0 solid var(--ed-verm);
+  animation: ed-proof-in 260ms ease 120ms both;
+}
+
+[data-theme='editorial'] .ed-proof__crop--tl {
+  top: 54px;
+  left: 54px;
+  border-left-width: 1.5px;
+  border-top-width: 1.5px;
+}
+
+[data-theme='editorial'] .ed-proof__crop--tr {
+  top: 54px;
+  right: 54px;
+  border-right-width: 1.5px;
+  border-top-width: 1.5px;
+}
+
+[data-theme='editorial'] .ed-proof__crop--bl {
+  bottom: 54px;
+  left: 54px;
+  border-left-width: 1.5px;
+  border-bottom-width: 1.5px;
+}
+
+[data-theme='editorial'] .ed-proof__crop--br {
+  bottom: 54px;
+  right: 54px;
+  border-right-width: 1.5px;
+  border-bottom-width: 1.5px;
+}
+
+[data-theme='editorial'] .ed-proof__note {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--ed-sans);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.3em;
+  text-indent: 0.3em;
+  white-space: nowrap;
+  color: var(--ed-ink);
+  background: color-mix(in srgb, var(--ed-paper) 85%, transparent);
+  padding: 4px 10px;
+  animation: ed-proof-in 260ms ease 80ms both;
+}
+
+[data-theme='editorial'] .ed-proof__bars {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  animation: ed-proof-in 260ms ease 160ms both;
+}
+
+[data-theme='editorial'] .ed-proof__bars i {
+  width: 34px;
+  height: 16px;
+  background: var(--c, var(--ed-ink));
+  border: 1px solid rgba(26, 21, 8, 0.35);
+}
+
+[data-theme='editorial'] .ed-proof__stamp {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 14px 32px;
+  border: 3px double var(--ed-verm);
+  border-radius: 3px;
+  font-family: var(--ed-sans);
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
+  text-transform: uppercase;
+  color: var(--ed-verm-ink);
+  background: color-mix(in srgb, var(--ed-paper) 78%, transparent);
+  transform: translate(-50%, -50%) rotate(-8deg);
+  animation: ed-proof-stamp 460ms var(--ease-out-back) 180ms both;
+}
+
+@keyframes ed-proof-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ed-proof-stamp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-8deg) scale(2.2);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-8deg) scale(1);
+  }
+}
+
+/* --- reduced motion: every new animation snaps to its settled state -------------- */
+
+[data-theme='editorial'] .ed.is-static .ed-kickerbar,
+[data-theme='editorial'] .ed.is-static .ed-sechead::before,
+[data-theme='editorial'] .ed.is-static .ed-cover__stats::before,
+[data-theme='editorial'] .ed.is-static .ed-specimen::before,
+[data-theme='editorial'] .ed.is-static .ed-filedwrap::before,
+[data-theme='editorial'] .ed.is-static .ed-laurel::after,
+[data-theme='editorial'] .ed.is-static .ed-figure img {
+  transform: none;
+  transition: none;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-dropcap__cap {
+  opacity: 1;
+  transform: none;
+  transition: none;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-redact,
+[data-theme='editorial'] .ed.is-static .ed-redact a {
+  transition: none;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-floatrule {
+  display: none; /* parallax-only ornaments — meaningless when static */
+}
+
+[data-theme='editorial'] .ed.is-static .ed-folio-live__page {
+  animation: none;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-receipt__card {
+  animation: none;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-proof__reg,
+[data-theme='editorial'] .ed.is-static .ed-proof__crop,
+[data-theme='editorial'] .ed.is-static .ed-proof__note,
+[data-theme='editorial'] .ed.is-static .ed-proof__bars,
+[data-theme='editorial'] .ed.is-static .ed-proof__stamp {
+  animation: none;
+}
+
+/* ==========================================================================
+   Responsive — the single-column edition
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  [data-theme='editorial'] .ed-cover__title {
+    grid-column: 1 / 13;
+  }
+
+  /* gutters vanish — the drifting rules go with them */
+  [data-theme='editorial'] .ed-floatrule {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-toc {
+    grid-column: 7 / 13;
+    grid-row: 3;
+    margin-top: 24px;
+  }
+
+  [data-theme='editorial'] .ed-cover__deckwrap {
+    grid-column: 1 / 7;
+  }
+
+  [data-theme='editorial'] .ed-about__body {
+    grid-column: 1 / 13;
+    margin-bottom: 40px;
+  }
+
+  [data-theme='editorial'] .ed-about__rail {
+    grid-column: 1 / 13;
+    display: grid;
+    grid-template-columns: minmax(220px, 2fr) 3fr;
+    align-items: start;
+  }
+
+  [data-theme='editorial'] .ed-feature__head,
+  [data-theme='editorial'] .ed-feature__body {
+    grid-column: 1 / 13;
+  }
+
+  [data-theme='editorial'] .ed-feature__meta {
+    grid-column: 1 / 13;
+    grid-row: auto;
+    border-left: none;
+    border-top: 1px solid var(--ed-rule);
+    padding: 16px 0 0;
+    margin-top: 20px;
+  }
+
+  [data-theme='editorial'] .ed-projfeats {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='editorial'] .ed-laurels {
+    grid-column: 1 / 13;
+  }
+
+  [data-theme='editorial'] .ed-awards__rail {
+    grid-column: 1 / 13;
+    border-left: none;
+    padding-left: 0;
+    margin-top: 40px;
+  }
+
+  [data-theme='editorial'] .ed-teasers {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='editorial'] .ed-index__head {
+    grid-template-columns: 44px 1.2fr 1.6fr 40px;
+  }
+
+  [data-theme='editorial'] .ed-index__head span:nth-child(4),
+  [data-theme='editorial'] .ed-index__head span:nth-child(5),
+  [data-theme='editorial'] .ed-row__stack,
+  [data-theme='editorial'] .ed-row__kind {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-row__head {
+    grid-template-columns: 44px 1.2fr 1.6fr 40px;
+  }
+}
+
+@media (max-width: 767px) {
+  [data-theme='editorial'] {
+    --ed-mast-h: 56px;
+    --ed-marquee-dur: 48s; /* slower strip on small screens */
+  }
+
+  /* grid rules hidden on mobile */
+  [data-theme='editorial'] .ed-main::before {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-masthead {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 10px var(--ed-pad);
+  }
+
+  [data-theme='editorial'] .ed-masthead__nav {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--ed-pad));
+    padding: 6px var(--ed-pad) 10px;
+    border-top: 1px solid var(--ed-rule-faint);
+  }
+
+  [data-theme='editorial'] .ed-masthead__nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-masthead__nav ul {
+    width: max-content;
+  }
+
+  [data-theme='editorial'] .ed-masthead__issue span:last-child {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-main {
+    padding-top: calc(var(--ed-mast-h) + 64px);
+  }
+
+  [data-theme='editorial'] .ed-cover {
+    display: block;
+    min-height: 0;
+  }
+
+  [data-theme='editorial'] .ed-cover__title {
+    font-size: clamp(56px, 16.5vw, 96px);
+  }
+
+  [data-theme='editorial'] .ed-cover__deckwrap {
+    padding: 28px 0;
+    max-width: none;
+  }
+
+  [data-theme='editorial'] .ed-toc {
+    margin: 8px 0 28px;
+  }
+
+  [data-theme='editorial'] .ed-ding--cover {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-cover__stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  [data-theme='editorial'] .ed-cover__statlist {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  [data-theme='editorial'] .ed-sechead {
+    grid-template-columns: auto 1fr;
+  }
+
+  [data-theme='editorial'] .ed-sechead__folio {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-sechead__sub {
+    display: block;
+    margin: 8px 0 0;
+    transform: none;
+    font-size: 13px;
+  }
+
+  [data-theme='editorial'] .ed-about__rail {
+    display: flex;
+    flex-direction: column;
+  }
+
+  [data-theme='editorial'] .ed-dropcap__cap {
+    font-size: 3.6em;
+  }
+
+  [data-theme='editorial'] .ed-about__body,
+  [data-theme='editorial'] .ed-ad__desc,
+  [data-theme='editorial'] .ed-feature__summary,
+  [data-theme='editorial'] .ed-projfeat__desc {
+    text-align: left;
+  }
+
+  [data-theme='editorial'] .ed-feature__ghost {
+    font-size: 120px;
+    opacity: 0.7;
+  }
+
+  [data-theme='editorial'] .ed-filed {
+    columns: 1;
+  }
+
+  [data-theme='editorial'] .ed-row__head {
+    grid-template-columns: 32px 1fr 28px;
+  }
+
+  [data-theme='editorial'] .ed-row__tagline {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-index__head {
+    grid-template-columns: 32px 1fr 28px;
+  }
+
+  [data-theme='editorial'] .ed-index__head span:nth-child(3) {
+    display: none;
+  }
+
+  [data-theme='editorial'] .ed-row__desc,
+  [data-theme='editorial'] .ed-row__points,
+  [data-theme='editorial'] .ed-row__fullstack,
+  [data-theme='editorial'] .ed-row__metrics {
+    margin-left: 0;
+  }
+
+  [data-theme='editorial'] .ed-specimen {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  [data-theme='editorial'] .ed-footer {
+    grid-template-columns: 1fr;
+    justify-content: start;
+  }
+
+  [data-theme='editorial'] .ed-folio-live {
+    display: none;
+  }
+}

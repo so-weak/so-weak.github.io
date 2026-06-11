@@ -1,0 +1,208 @@
+/* ==========================================================================
+   ThemeSwitcher — fixed bottom-right dropdown.
+   Deliberately NOT theme-scoped: neutral glass that sits on any theme.
+   ========================================================================== */
+
+/* ── wrapper ─────────────────────────────────────────────────────────────── */
+
+.sg-switcher {
+  position: fixed;
+  right: clamp(12px, 2vw, 24px);
+  bottom: clamp(12px, 2vw, 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 100;
+  transition: opacity var(--dur-base) ease;
+}
+
+.sg-switcher.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── trigger button ─────────────────────────────────────────────────────── */
+
+.sg-switcher__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 8px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #101014 80%, transparent);
+  border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.35);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #d9d9df;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+
+.sg-switcher__trigger:hover {
+  background: color-mix(in srgb, #101014 88%, transparent);
+  color: #ffffff;
+  border-color: color-mix(in srgb, #ffffff 22%, transparent);
+}
+
+.sg-switcher.is-open .sg-switcher__trigger {
+  background: color-mix(in srgb, #101014 92%, transparent);
+  color: #ffffff;
+  border-color: color-mix(in srgb, #ffffff 26%, transparent);
+}
+
+.sg-switcher__trigger:focus-visible {
+  outline: 2px solid var(--accent, #5cf2c4);
+  outline-offset: 2px;
+}
+
+/* ── trigger swatch + label ───────────────────────────────────────────────── */
+
+.sg-switcher__tswatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--swatch, #888);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.3) inset,
+    0 0 7px var(--swatch, #888);
+  flex-shrink: 0;
+}
+
+.sg-switcher__tlabel {
+  /* label stays visible; the kbd shortcuts disappear on small screens */
+}
+
+/* ── chevron ─────────────────────────────────────────────────────────────── */
+
+.sg-switcher__chevron {
+  display: flex;
+  align-items: center;
+  margin-left: 2px;
+  transition: transform var(--dur-fast) var(--ease-out-expo, ease);
+  color: color-mix(in srgb, currentColor 60%, transparent);
+}
+
+.sg-switcher.is-open .sg-switcher__chevron {
+  transform: rotate(180deg);
+}
+
+/* ── panel ──────────────────────────────────────────────────────────────── */
+
+.sg-switcher__panel {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 6px;
+  border-radius: 14px;
+  background: color-mix(in srgb, #101014 88%, transparent);
+  border: 1px solid color-mix(in srgb, #ffffff 14%, transparent);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow:
+    0 16px 48px rgb(0 0 0 / 0.45),
+    0 2px 8px rgb(0 0 0 / 0.2);
+  min-width: 180px;
+
+  /* entrance animation */
+  transform-origin: bottom right;
+  animation: sg-panel-in 200ms var(--ease-out-expo, cubic-bezier(.16,1,.3,1)) both;
+}
+
+.sg-switcher__panel[hidden] {
+  display: none;
+}
+
+@keyframes sg-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── options ────────────────────────────────────────────────────────────── */
+
+.sg-switcher__option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #c8c8ce;
+  transition:
+    background-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+
+.sg-switcher__option:hover,
+.sg-switcher__option:focus-visible {
+  background: color-mix(in srgb, #ffffff 9%, transparent);
+  color: #ffffff;
+  outline: none;
+}
+
+.sg-switcher__option.is-active {
+  background: color-mix(in srgb, #ffffff 12%, transparent);
+  color: #ffffff;
+}
+
+.sg-switcher__option:focus-visible {
+  box-shadow: inset 0 0 0 1.5px var(--accent, #5cf2c4);
+}
+
+/* ── option swatch ──────────────────────────────────────────────────────── */
+
+.sg-switcher__swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.3) inset;
+  flex-shrink: 0;
+}
+
+.sg-switcher__option.is-active .sg-switcher__swatch {
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 0.3) inset,
+    0 0 8px var(--swatch);
+}
+
+/* ── option label + keyboard shortcut ───────────────────────────────────── */
+
+.sg-switcher__label {
+  flex: 1;
+  text-align: left;
+}
+
+.sg-switcher__kbd {
+  font-family: inherit;
+  font-size: 10px;
+  color: color-mix(in srgb, currentColor 45%, transparent);
+  margin-left: auto;
+}
+
+/* ── small screens: hide kbd shortcuts, keep swatch + label ──────────────── */
+
+@media (max-width: 480px) {
+  .sg-switcher__kbd {
+    display: none;
+  }
+
+  .sg-switcher__panel {
+    min-width: 160px;
+  }
+}

@@ -1,0 +1,1789 @@
+/* ==========================================================================
+   ELECTROFORM CHROME — theme stylesheet.
+   Every rule is scoped under [data-theme='electroform'] (theme CSS stays
+   loaded after a switch). Keyframes use an `ef-` prefix for the same reason.
+
+   Palette: near-black #0a0a0c · chrome silver / icy blue · acid #ccff00.
+   Type:    Unbounded Variable (display) · Archivo Variable (body)
+            · IBM Plex Mono (labels / indices / metadata).
+   ========================================================================== */
+
+/* --- tokens ---------------------------------------------------------------- */
+
+[data-theme='electroform'] {
+  --ef-bg: #0a0a0c;
+  --ef-ink: #eef2f8;
+  --ef-soft: #d7dee9;
+  /* dim/faint raised to clear AA on #0a0a0c (≈9:1 / ≈7.8:1) — this is
+     reading copy, not decoration */
+  --ef-dim: #aab4c5;
+  --ef-faint: #9aa3b5;
+  --ef-lime: #ccff00;
+  --ef-ice: #7fa8ff;
+  --ef-line: rgba(199, 208, 221, 0.16);
+  --ef-line-strong: rgba(199, 208, 221, 0.34);
+  --ef-glass: rgba(12, 14, 19, 0.64);
+  --ef-pad: clamp(20px, 6vw, 110px);
+  --ef-disp: 'Unbounded Variable', system-ui, sans-serif;
+  --ef-body: 'Archivo Variable', system-ui, sans-serif;
+  --ef-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  /* darkest chrome stops raised (#8d9cb2 / #a8b7cb) so gradient glyphs
+     never dip below AA against the near-black scene */
+  --ef-chrome: linear-gradient(
+    177deg,
+    #f7faff 6%,
+    #d2dbe8 26%,
+    #8d9cb2 46%,
+    #f0f4fa 52%,
+    #a8b7cb 72%,
+    #e6edf6 94%
+  );
+  /* dimmer chrome for the decorative ghost hero line — still solid-filled */
+  --ef-chrome-ghost: linear-gradient(
+    177deg,
+    #d4ddea 8%,
+    #93a1b7 38%,
+    #c0cbdb 54%,
+    #8694aa 78%,
+    #c8d2e1 96%
+  );
+  /* soft radial backplate dropped behind dense text sections */
+  --ef-scrim: radial-gradient(
+    130% 95% at 50% 48%,
+    rgba(6, 7, 10, 0.74),
+    rgba(6, 7, 10, 0.32) 62%,
+    rgba(6, 7, 10, 0) 84%
+  );
+  --ef-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Konami spectacle — 3s chrome→lime palette inversion (class driven by JS) */
+[data-theme='electroform'] .ef.is-konami {
+  --ef-chrome: linear-gradient(
+    177deg,
+    #f6ffd6 6%,
+    #e2ff66 26%,
+    #aedb00 46%,
+    #f0ffba 52%,
+    #c3ef1a 72%,
+    #eaffa3 94%
+  );
+  --ef-chrome-ghost: linear-gradient(
+    177deg,
+    #e4ffa0 8%,
+    #a8d40e 38%,
+    #d6ff5e 54%,
+    #9cc40a 78%,
+    #defc8a 96%
+  );
+  --ef-lime: #e9eef7;
+}
+
+/* --- global chrome: selection / focus / cursor ------------------------------ */
+
+[data-theme='electroform'] ::selection {
+  background: var(--ef-lime);
+  color: var(--ef-bg);
+}
+
+[data-theme='electroform'] :focus-visible {
+  outline-color: var(--ef-lime);
+}
+
+/* chrome ring cursor — calm silver, lime on hover */
+[data-theme='electroform'] #cursor .cursor-dot {
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  background: transparent;
+  border: 1.5px solid rgba(222, 230, 242, 0.9);
+  box-shadow:
+    0 0 14px rgba(127, 168, 255, 0.3),
+    inset 0 0 6px rgba(127, 168, 255, 0.28);
+  mix-blend-mode: normal;
+}
+
+[data-theme='electroform'] #cursor[data-mode='hover'] .cursor-dot {
+  transform: scale(1.75);
+  border-color: var(--ef-lime);
+  background: rgba(204, 255, 0, 0.07);
+  box-shadow: 0 0 20px rgba(204, 255, 0, 0.45);
+}
+
+[data-theme='electroform'] #cursor[data-mode='hidden'] .cursor-dot {
+  opacity: 0;
+}
+
+/* --- wrapper + atmosphere ------------------------------------------------------ */
+
+[data-theme='electroform'] .ef {
+  position: relative;
+  font-family: var(--ef-body);
+  color: var(--ef-ink);
+  overflow-x: clip;
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+[data-theme='electroform'] .ef.is-mounted {
+  opacity: 1;
+}
+
+[data-theme='electroform'] .ef.is-leaving {
+  opacity: 0;
+  transition-duration: 320ms;
+}
+
+/* vignette + cold ambient light (under the grain) */
+[data-theme='electroform'] .ef::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(127, 168, 255, 0.05), transparent 60%),
+    radial-gradient(135% 110% at 50% 115%, rgba(3, 4, 7, 0.5), transparent 58%);
+}
+
+/* film grain */
+[data-theme='electroform'] .ef::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 71;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+
+/* --- top bar -------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px clamp(16px, 3vw, 40px);
+  background: linear-gradient(180deg, rgba(10, 10, 12, 0.82), rgba(10, 10, 12, 0));
+  pointer-events: none;
+}
+
+[data-theme='electroform'] .ef-top a {
+  pointer-events: auto;
+}
+
+[data-theme='electroform'] .ef-top__mark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+[data-theme='electroform'] .ef-top__sigil {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--ef-chrome);
+  color: var(--ef-bg);
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+[data-theme='electroform'] .ef-top__word {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.42em;
+  color: var(--ef-soft);
+}
+
+[data-theme='electroform'] .ef-top__meta {
+  display: flex;
+  align-items: center;
+  gap: clamp(14px, 2.4vw, 30px);
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-top__avail {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ef-soft);
+}
+
+[data-theme='electroform'] .ef-top__avail i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ef-lime);
+  box-shadow: 0 0 10px rgba(204, 255, 0, 0.9);
+  animation: ef-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes ef-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+
+[data-theme='electroform'] .ef-top__cv {
+  color: var(--ef-lime);
+  text-decoration: none;
+  border: 1px solid rgba(204, 255, 0, 0.4);
+  border-radius: 999px;
+  padding: 6px 13px;
+  transition:
+    background var(--dur-base) ease,
+    box-shadow var(--dur-base) ease;
+}
+
+[data-theme='electroform'] .ef-top__cv:hover {
+  background: rgba(204, 255, 0, 0.12);
+  box-shadow: 0 0 18px rgba(204, 255, 0, 0.18);
+}
+
+/* --- dot nav (right edge) --------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-nav {
+  position: fixed;
+  right: clamp(10px, 2vw, 26px);
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+}
+
+[data-theme='electroform'] .ef-nav__list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+[data-theme='electroform'] .ef-nav__list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 2px;
+  text-decoration: none;
+}
+
+[data-theme='electroform'] .ef-nav__label {
+  font-family: var(--ef-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: var(--ef-dim);
+  opacity: 0;
+  transform: translateX(8px);
+  /* glass pill keeps the label readable over the GL scene + body copy */
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(10, 10, 12, 0.78);
+  transition:
+    opacity 350ms var(--ef-ease),
+    transform 350ms var(--ef-ease),
+    color 350ms ease;
+}
+
+[data-theme='electroform'] .ef-nav__list a:hover .ef-nav__label,
+[data-theme='electroform'] .ef-nav__list a:focus-visible .ef-nav__label,
+[data-theme='electroform'] .ef-nav__list a.is-active .ef-nav__label {
+  opacity: 1;
+  transform: none;
+  color: var(--ef-ink);
+}
+
+[data-theme='electroform'] .ef-nav__list a.is-active .ef-nav__label {
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-nav__dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1px solid rgba(207, 215, 228, 0.55);
+  transition:
+    transform 350ms var(--ef-ease),
+    border-color 350ms ease,
+    background 350ms ease,
+    box-shadow 350ms ease;
+}
+
+[data-theme='electroform'] .ef-nav__list a:hover .ef-nav__dot {
+  border-color: #eef2f8;
+  transform: scale(1.3);
+}
+
+[data-theme='electroform'] .ef-nav__list a.is-active .ef-nav__dot {
+  background: var(--ef-lime);
+  border-color: var(--ef-lime);
+  box-shadow: 0 0 12px rgba(204, 255, 0, 0.8);
+}
+
+[data-theme='electroform'] .ef-nav__labitem {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+[data-theme='electroform'] .ef-nav__lab {
+  writing-mode: vertical-rl;
+  font-family: var(--ef-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: var(--ef-faint);
+  text-decoration: none;
+  padding: 4px 2px;
+  transition: color var(--dur-base) ease;
+}
+
+[data-theme='electroform'] .ef-nav__lab:hover {
+  color: var(--ef-lime);
+}
+
+/* --- section scaffolding ------------------------------------------------------------ */
+
+[data-theme='electroform'] .ef-section {
+  position: relative;
+  max-width: 1560px;
+  margin-inline: auto;
+  padding-block: clamp(110px, 16vh, 200px);
+  padding-inline: var(--ef-pad);
+  /* soft dark backplate behind every dense text chapter — the GL field is
+     additionally dimmed/defocused behind these via the uDim uniform */
+  background: var(--ef-scrim);
+}
+
+[data-theme='electroform'] .ef-section__head {
+  display: flex;
+  align-items: baseline;
+  gap: clamp(14px, 2.5vw, 28px);
+  margin-bottom: clamp(40px, 7vh, 84px);
+}
+
+[data-theme='electroform'] .ef-section__idx {
+  font-family: var(--ef-mono);
+  font-size: 12px;
+  color: var(--ef-lime);
+  letter-spacing: 0.35em;
+}
+
+[data-theme='electroform'] .ef-section__head.ef-reveal .ef-section__idx {
+  letter-spacing: 0.75em;
+  transition: letter-spacing 1.2s var(--ef-ease);
+}
+
+[data-theme='electroform'] .ef-section__head.is-in .ef-section__idx {
+  letter-spacing: 0.35em;
+}
+
+[data-theme='electroform'] .ef-section__title {
+  font-family: var(--ef-disp);
+  font-weight: 750;
+  font-size: clamp(2.3rem, 7.2vw, 6.4rem);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-section__rule {
+  flex: 1;
+  align-self: center;
+  height: 1px;
+  background: linear-gradient(90deg, var(--ef-line-strong), transparent);
+}
+
+/* --- reveals + intro choreography ----------------------------------------------------- */
+
+[data-theme='electroform'] .ef-reveal {
+  opacity: 0;
+  transform: translateY(34px);
+  transition:
+    opacity 900ms var(--ef-ease),
+    transform 900ms var(--ef-ease);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+[data-theme='electroform'] .ef-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* parallaxed elements get inline transforms every frame — reveal them with
+   clip-path instead so the two systems never fight */
+[data-theme='electroform'] .ef-reveal[data-speed] {
+  transform: none;
+  clip-path: inset(10% -4% 22% -4%);
+  transition:
+    opacity 900ms var(--ef-ease),
+    clip-path 1000ms var(--ef-ease);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+[data-theme='electroform'] .ef-reveal[data-speed].is-in {
+  opacity: 1;
+  clip-path: inset(-30% -10% -30% -10%);
+}
+
+[data-theme='electroform'] .ef-intro {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 950ms var(--ef-ease),
+    transform 950ms var(--ef-ease);
+  transition-delay: calc(140ms + var(--i, 0) * 110ms);
+}
+
+[data-theme='electroform'] .ef.is-mounted .ef-intro {
+  opacity: 1;
+  transform: none;
+}
+
+[data-theme='electroform'] .ef-intro[data-speed] {
+  transform: none;
+  clip-path: inset(0 -4% 100% -4%);
+  transition:
+    opacity 950ms var(--ef-ease),
+    clip-path 1150ms var(--ef-ease);
+  transition-delay: calc(140ms + var(--i, 0) * 110ms);
+}
+
+[data-theme='electroform'] .ef.is-mounted .ef-intro[data-speed] {
+  opacity: 1;
+  clip-path: inset(-10% -4% -10% -4%);
+}
+
+/* --- glass surface --------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-glass {
+  background: var(--ef-glass);
+  border: 1px solid var(--ef-line);
+  border-radius: 16px;
+  backdrop-filter: blur(16px) saturate(1.25);
+  -webkit-backdrop-filter: blur(16px) saturate(1.25);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* --- hero --------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-hero {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(86px + 2vh) var(--ef-pad) clamp(90px, 12vh, 140px);
+  max-width: 1560px;
+  margin-inline: auto;
+  /* scrim anchored behind the text column (left) — blob keeps the right */
+  background: radial-gradient(
+    95% 80% at 22% 46%,
+    rgba(6, 7, 10, 0.72),
+    rgba(6, 7, 10, 0.26) 58%,
+    rgba(6, 7, 10, 0) 80%
+  );
+}
+
+[data-theme='electroform'] .ef-hero__index {
+  font-family: var(--ef-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: var(--ef-dim);
+  margin-bottom: clamp(18px, 4vh, 44px);
+}
+
+[data-theme='electroform'] .ef-hero__name {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 0.94;
+  /* katakana hold-egg: no text selection / iOS callout during the hold */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+[data-theme='electroform'] .ef-hero__line {
+  display: block;
+  width: fit-content;
+  font-family: var(--ef-disp);
+  font-weight: 800;
+  font-size: clamp(3rem, 12.4vw, 12rem);
+  letter-spacing: -0.018em;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+/* per-letter spans — each carries its own (near-vertical) chrome clip so the
+   katakana flip can transform letters without breaking the gradient */
+[data-theme='electroform'] .ef-hero__ltr {
+  display: inline-block;
+  transition:
+    transform 150ms var(--ef-ease),
+    opacity 150ms ease;
+}
+
+[data-theme='electroform'] .ef-hero__ltr.is-flip {
+  transform: scaleY(0.12) skewX(-8deg);
+  opacity: 0.25;
+}
+
+/* solid chrome line — appears in front of the blob */
+[data-theme='electroform'] .ef-hero__line--solid .ef-hero__ltr {
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ghost line — decorative echo of the surname; now solid-filled (dimmer
+   chrome + faint stroke) so it stays readable, real text lives in the
+   h1's aria-label */
+[data-theme='electroform'] .ef-hero__line--ghost {
+  margin-top: -0.05em;
+  margin-left: clamp(3rem, 21vw, 23rem);
+}
+
+[data-theme='electroform'] .ef-hero__line--ghost .ef-hero__ltr {
+  background: var(--ef-chrome-ghost);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(222, 230, 244, 0.28);
+}
+
+[data-theme='electroform'] .ef-hero__sub {
+  margin-top: clamp(24px, 5vh, 52px);
+  max-width: 720px;
+}
+
+[data-theme='electroform'] .ef-hero__role {
+  font-family: var(--ef-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-hero__tagline {
+  margin-top: 12px;
+  font-size: var(--step-1);
+  font-weight: 450;
+  line-height: 1.55;
+  color: var(--ef-soft);
+  max-width: 52ch;
+}
+
+[data-theme='electroform'] .ef-hero__stats {
+  margin-top: clamp(40px, 8vh, 88px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(26px, 5vw, 72px);
+}
+
+[data-theme='electroform'] .ef-hero__stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-theme='electroform'] .ef-hero__stats strong {
+  font-family: var(--ef-disp);
+  font-weight: 700;
+  font-size: var(--step-3);
+  line-height: 1;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-hero__stats span {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-hero__scroll {
+  position: absolute;
+  bottom: 30px;
+  left: var(--ef-pad);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-family: var(--ef-mono);
+  font-size: 10px;
+  letter-spacing: 0.34em;
+  color: var(--ef-dim);
+  transition: opacity 600ms ease;
+}
+
+[data-theme='electroform'] .ef.is-scrolled .ef-hero__scroll {
+  opacity: 0;
+}
+
+[data-theme='electroform'] .ef-hero__scrollline {
+  position: relative;
+  width: 1px;
+  height: 52px;
+  background: rgba(214, 224, 240, 0.22);
+  overflow: hidden;
+}
+
+[data-theme='electroform'] .ef-hero__scrollline::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -30%;
+  width: 100%;
+  height: 30%;
+  background: var(--ef-lime);
+  animation: ef-scan 2.2s var(--ease-in-out-cubic) infinite;
+}
+
+@keyframes ef-scan {
+  to {
+    top: 130%;
+  }
+}
+
+/* --- about ----------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-about__grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) 1fr;
+  gap: clamp(24px, 4vw, 56px);
+  align-items: start;
+}
+
+[data-theme='electroform'] .ef-about__portrait {
+  padding: 14px;
+  will-change: transform;
+}
+
+[data-theme='electroform'] .ef-about__portrait img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 8px;
+  /* chrome duotone treatment */
+  filter: grayscale(1) contrast(1.12) brightness(0.92) sepia(0.22)
+    hue-rotate(175deg) saturate(1.45);
+}
+
+[data-theme='electroform'] .ef-about__portrait figcaption {
+  margin-top: 12px;
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-about__text {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(16px, 2vw, 24px);
+}
+
+[data-theme='electroform'] .ef-about__para {
+  padding: clamp(18px, 2.4vw, 30px);
+}
+
+[data-theme='electroform'] .ef-about__para p {
+  color: var(--ef-soft);
+  font-weight: 450;
+  line-height: 1.7;
+}
+
+[data-theme='electroform'] .ef-about__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  margin-top: 8px;
+}
+
+[data-theme='electroform'] .ef-about__stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-theme='electroform'] .ef-about__stats strong {
+  font-family: var(--ef-disp);
+  font-weight: 700;
+  font-size: var(--step-2);
+  line-height: 1;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-about__stats span {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-about__hobbytitle {
+  margin: clamp(56px, 10vh, 96px) 0 26px;
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.42em;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-about__hobbies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+  gap: clamp(14px, 1.8vw, 22px);
+}
+
+[data-theme='electroform'] .ef-hobby {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: clamp(18px, 2vw, 28px);
+  transition:
+    transform 450ms var(--ef-ease),
+    border-color 450ms ease;
+}
+
+[data-theme='electroform'] .ef-hobby:hover {
+  transform: translateY(-6px);
+  border-color: rgba(204, 255, 0, 0.35);
+}
+
+[data-theme='electroform'] .ef-hobby__numeral {
+  font-family: var(--ef-disp);
+  font-weight: 700;
+  font-size: var(--step-3);
+  line-height: 1;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-hobby__arcana {
+  font-family: var(--ef-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-hobby__title {
+  font-family: var(--ef-disp);
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: #eef2f8;
+}
+
+[data-theme='electroform'] .ef-hobby__desc {
+  font-size: 0.98rem;
+  font-weight: 450;
+  line-height: 1.6;
+  color: var(--ef-dim);
+}
+
+/* --- experience -------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-exp__list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(64px, 12vh, 130px);
+}
+
+[data-theme='electroform'] .ef-exp__entry {
+  position: relative;
+  padding-left: clamp(26px, 4vw, 56px);
+}
+
+[data-theme='electroform'] .ef-exp__rail {
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, var(--ef-line-strong), transparent);
+}
+
+[data-theme='electroform'] .ef-exp__rail i {
+  position: absolute;
+  top: 0;
+  left: -3.5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ef-lime);
+  box-shadow: 0 0 12px rgba(204, 255, 0, 0.8);
+}
+
+[data-theme='electroform'] .ef-exp__company {
+  font-family: var(--ef-disp);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 3.6vw, 3rem);
+  line-height: 1.05;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-exp__meta {
+  margin-top: 10px;
+  font-family: var(--ef-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-exp__summary {
+  margin-top: 20px;
+  max-width: 70ch;
+  font-weight: 450;
+  line-height: 1.65;
+  color: var(--ef-soft);
+}
+
+[data-theme='electroform'] .ef-exp__highlights {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+[data-theme='electroform'] .ef-exp__highlights li,
+[data-theme='electroform'] .ef-points li {
+  position: relative;
+  padding-left: 20px;
+  max-width: 72ch;
+  font-weight: 450;
+  line-height: 1.6;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-exp__highlights li::before,
+[data-theme='electroform'] .ef-points li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  top: 0.32em;
+  font-size: 0.7em;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-exp__projects {
+  margin-top: 32px;
+  border-top: 1px solid var(--ef-line);
+}
+
+/* --- expandable rows (experience + projects) ------------------------------------------------------ */
+
+[data-theme='electroform'] .ef-xprow,
+[data-theme='electroform'] .ef-projrow {
+  border-bottom: 1px solid var(--ef-line);
+}
+
+[data-theme='electroform'] .ef-xprow__btn,
+[data-theme='electroform'] .ef-projrow__btn {
+  width: 100%;
+  display: grid;
+  align-items: center;
+  gap: clamp(10px, 2vw, 24px);
+  text-align: left;
+  transition: background 400ms ease;
+}
+
+[data-theme='electroform'] .ef-xprow__btn {
+  grid-template-columns: 3em minmax(0, 1fr) auto 1.6em;
+  padding: 15px 6px;
+}
+
+[data-theme='electroform'] .ef-projrow__btn {
+  grid-template-columns: 3.2em minmax(0, 1.1fr) minmax(0, 1.5fr) 1.8em;
+  padding: clamp(20px, 3.4vh, 32px) 6px;
+}
+
+[data-theme='electroform'] .ef-xprow__btn:hover,
+[data-theme='electroform'] .ef-projrow__btn:hover {
+  background: linear-gradient(90deg, rgba(204, 255, 0, 0.05), transparent 45%);
+}
+
+[data-theme='electroform'] .ef-xprow__idx,
+[data-theme='electroform'] .ef-projrow__idx {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-xprow__name {
+  font-weight: 600;
+  font-size: var(--step-1);
+  color: #e8edf5;
+  transition: transform 450ms var(--ef-ease);
+}
+
+[data-theme='electroform'] .ef-xprow__btn:hover .ef-xprow__name {
+  transform: translateX(6px);
+}
+
+[data-theme='electroform'] .ef-xprow__tag {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--ef-dim);
+  text-align: right;
+}
+
+[data-theme='electroform'] .ef-xprow__plus,
+[data-theme='electroform'] .ef-projrow__plus {
+  justify-self: end;
+  font-family: var(--ef-mono);
+  font-size: 19px;
+  line-height: 1;
+  color: var(--ef-dim);
+  transition:
+    transform 400ms var(--ef-ease),
+    color 400ms ease;
+}
+
+[data-theme='electroform'] .ef-xprow.is-open .ef-xprow__plus,
+[data-theme='electroform'] .ef-projrow.is-open .ef-projrow__plus {
+  transform: rotate(45deg);
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-expand {
+  display: grid;
+  grid-template-rows: 0fr;
+  /* visibility keeps collapsed links out of the tab order / a11y tree;
+     the 550ms delay lets the row finish folding before content vanishes */
+  visibility: hidden;
+  transition:
+    grid-template-rows 550ms var(--ef-ease),
+    visibility 0s 550ms;
+}
+
+[data-theme='electroform'] .ef-xprow.is-open .ef-expand,
+[data-theme='electroform'] .ef-projrow.is-open .ef-expand {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition-delay: 0s, 0s;
+}
+
+[data-theme='electroform'] .ef-expand__inner {
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 4px 6px 26px;
+}
+
+[data-theme='electroform'] .ef-points {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+[data-theme='electroform'] .ef-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+[data-theme='electroform'] .ef-chips li {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: #bcc6d7;
+  padding: 5px 11px;
+  border: 1px solid var(--ef-line-strong);
+  border-radius: 999px;
+}
+
+/* --- projects ------------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-proj__list {
+  border-top: 1px solid var(--ef-line);
+}
+
+[data-theme='electroform'] .ef-projrow__name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--ef-disp);
+  font-weight: 650;
+  font-size: clamp(1.1rem, 2.5vw, 1.9rem);
+  line-height: 1.1;
+  color: #edf1f8;
+  transition: transform 450ms var(--ef-ease);
+}
+
+[data-theme='electroform'] .ef-projrow.is-featured .ef-projrow__name {
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-projrow__btn:hover .ef-projrow__name {
+  transform: translateX(8px);
+}
+
+[data-theme='electroform'] .ef-badge {
+  font-family: var(--ef-mono);
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--ef-lime);
+  color: var(--ef-bg);
+  flex: none;
+}
+
+[data-theme='electroform'] .ef-badge--dim {
+  background: transparent;
+  color: var(--ef-dim);
+  border: 1px solid var(--ef-line-strong);
+}
+
+[data-theme='electroform'] .ef-projrow__tagline {
+  font-size: var(--step-0);
+  font-weight: 450;
+  color: var(--ef-dim);
+  line-height: 1.45;
+}
+
+[data-theme='electroform'] .ef-projrow__desc {
+  max-width: 75ch;
+  font-weight: 450;
+  line-height: 1.65;
+  color: var(--ef-soft);
+}
+
+[data-theme='electroform'] .ef-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(20px, 4vw, 48px);
+}
+
+[data-theme='electroform'] .ef-metrics li {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+[data-theme='electroform'] .ef-metrics strong {
+  font-family: var(--ef-disp);
+  font-weight: 700;
+  font-size: var(--step-2);
+  line-height: 1;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-metrics span {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-projrow__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+[data-theme='electroform'] .ef-projrow__links a {
+  font-family: var(--ef-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: var(--ef-lime);
+  text-decoration: none;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgba(204, 255, 0, 0.35);
+  transition: border-color var(--dur-base) ease;
+}
+
+[data-theme='electroform'] .ef-projrow__links a:hover {
+  border-color: var(--ef-lime);
+}
+
+/* --- skills marquees --------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-skills__strips {
+  display: flex;
+  flex-direction: column;
+}
+
+[data-theme='electroform'] .ef-marquee {
+  padding: clamp(18px, 3vh, 28px) 0;
+  border-top: 1px solid var(--ef-line);
+}
+
+[data-theme='electroform'] .ef-marquee:last-child {
+  border-bottom: 1px solid var(--ef-line);
+}
+
+[data-theme='electroform'] .ef-marquee__label {
+  display: block;
+  margin-bottom: 14px;
+  font-family: var(--ef-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-marquee__clip {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  overflow: hidden;
+  /* soft fade at the viewport edges */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 6%,
+    #000 94%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+[data-theme='electroform'] .ef-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: ef-marquee var(--dur, 32s) linear infinite;
+  will-change: transform;
+}
+
+[data-theme='electroform'] .ef-marquee--rev .ef-marquee__track {
+  animation-direction: reverse;
+}
+
+/* pausable: hover or keyboard focus halts the strip */
+[data-theme='electroform'] .ef-marquee:hover .ef-marquee__track,
+[data-theme='electroform'] .ef-marquee:focus-within .ef-marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes ef-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+[data-theme='electroform'] .ef-marquee__inner {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 3vw, 44px);
+  padding-right: clamp(20px, 3vw, 44px);
+  white-space: nowrap;
+  font-size: clamp(1.25rem, 2.6vw, 2.2rem);
+  font-weight: 550;
+  color: #d6deeb;
+}
+
+[data-theme='electroform'] .ef-marquee__sep {
+  font-size: 0.45em;
+  color: rgba(204, 255, 0, 0.5);
+}
+
+/* --- awards / certifications / education ------------------------------------------------------------------ */
+
+[data-theme='electroform'] .ef-awards__list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 78ch;
+  font-family: var(--ef-mono);
+  font-size: var(--step-0);
+}
+
+[data-theme='electroform'] .ef-awards__list li {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  color: var(--ef-soft);
+  line-height: 1.55;
+}
+
+[data-theme='electroform'] .ef-awards__list i {
+  font-style: normal;
+  color: var(--ef-lime);
+  flex: none;
+}
+
+[data-theme='electroform'] .ef-awards__cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(28px, 5vw, 72px);
+  margin-top: clamp(48px, 8vh, 84px);
+}
+
+[data-theme='electroform'] .ef-awards__cols h3 {
+  margin-bottom: 18px;
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.35em;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-awards__cols ul {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-theme='electroform'] .ef-awards__cols li {
+  color: var(--ef-dim);
+  font-weight: 450;
+  line-height: 1.55;
+}
+
+[data-theme='electroform'] .ef-awards__cols strong {
+  font-weight: 600;
+  color: #e3e9f3;
+}
+
+[data-theme='electroform'] .ef-awards__cols li span {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ef-faint);
+}
+
+/* --- writing (coming-soon drafts) --------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-writing__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(16px, 2vw, 28px);
+  will-change: transform;
+}
+
+[data-theme='electroform'] .ef-draft {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 250px;
+  padding: clamp(22px, 2.6vw, 34px);
+  border: 1px dashed var(--ef-line-strong);
+  border-radius: 14px;
+  transition:
+    transform 450ms var(--ef-ease),
+    border-color 450ms ease;
+}
+
+[data-theme='electroform'] .ef-draft:hover {
+  transform: translateY(-5px);
+  border-color: rgba(204, 255, 0, 0.4);
+}
+
+[data-theme='electroform'] .ef-draft__stamp {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  padding: 4px 10px;
+  transform: rotate(8deg);
+  font-family: var(--ef-mono);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--ef-lime);
+  border: 1px dashed rgba(204, 255, 0, 0.55);
+  border-radius: 4px;
+}
+
+[data-theme='electroform'] .ef-draft h3 {
+  padding-right: 70px;
+  font-family: var(--ef-disp);
+  font-weight: 600;
+  font-size: var(--step-1);
+  line-height: 1.25;
+  color: #e9eef6;
+}
+
+[data-theme='electroform'] .ef-draft p {
+  font-size: 1rem;
+  font-weight: 450;
+  line-height: 1.6;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-draft__status {
+  margin-top: auto;
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  color: var(--ef-faint);
+}
+
+/* published entry — a real link card with a READ affordance */
+[data-theme='electroform'] .ef-pub {
+  padding: 0;
+  border: 1px solid rgba(204, 255, 0, 0.38);
+}
+
+[data-theme='electroform'] .ef-pub:hover {
+  border-color: var(--ef-lime);
+  box-shadow: 0 12px 40px rgba(204, 255, 0, 0.08);
+}
+
+[data-theme='electroform'] .ef-pub__link {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  height: 100%;
+  padding: clamp(22px, 2.6vw, 34px);
+  border-radius: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+
+[data-theme='electroform'] .ef-pub .ef-draft__stamp {
+  border: none;
+  background: var(--ef-lime);
+  color: var(--ef-bg);
+  font-weight: 600;
+  transform: rotate(-2deg);
+}
+
+[data-theme='electroform'] .ef-pub .ef-draft__status {
+  color: var(--ef-lime);
+  font-weight: 500;
+}
+
+[data-theme='electroform'] .ef-pub__link:hover .ef-draft__status,
+[data-theme='electroform'] .ef-pub__link:focus-visible .ef-draft__status {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* --- contact ----------------------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-contact {
+  min-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+[data-theme='electroform'] .ef-contact__heading {
+  max-width: 18ch;
+  font-family: var(--ef-disp);
+  font-weight: 750;
+  font-size: clamp(1.9rem, 4.6vw, 4.2rem);
+  line-height: 1.06;
+  letter-spacing: -0.01em;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+[data-theme='electroform'] .ef-contact__blurb {
+  margin-top: 24px;
+  max-width: 58ch;
+  font-weight: 450;
+  line-height: 1.65;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-contact__email {
+  position: relative;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  margin-top: clamp(36px, 7vh, 72px);
+  font-family: var(--ef-disp);
+  font-weight: 800;
+  font-size: clamp(1.2rem, 4vw, 4.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  word-break: break-word;
+  text-decoration: none;
+  background: var(--ef-chrome);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  will-change: transform;
+}
+
+[data-theme='electroform'] .ef-contact__email::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -10px;
+  width: 100%;
+  height: 3px;
+  background: var(--ef-lime);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 550ms var(--ef-ease);
+}
+
+[data-theme='electroform'] .ef-contact__email:hover::after,
+[data-theme='electroform'] .ef-contact__email:focus-visible::after {
+  transform: scaleX(1);
+}
+
+[data-theme='electroform'] .ef-contact__actions {
+  margin-top: clamp(40px, 7vh, 70px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+[data-theme='electroform'] .ef-btn {
+  display: inline-block;
+  padding: 16px 26px;
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #dfe6f0;
+  text-decoration: none;
+  border: 1px solid var(--ef-line-strong);
+  border-radius: 999px;
+  transition:
+    background var(--dur-base) ease,
+    color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    box-shadow var(--dur-base) ease,
+    transform var(--dur-base) var(--ef-ease);
+}
+
+[data-theme='electroform'] .ef-btn:hover {
+  border-color: #e7edf6;
+  background: rgba(231, 237, 246, 0.08);
+  transform: translateY(-2px);
+}
+
+[data-theme='electroform'] .ef-btn--lime {
+  background: var(--ef-lime);
+  border-color: var(--ef-lime);
+  color: var(--ef-bg);
+  font-weight: 600;
+}
+
+[data-theme='electroform'] .ef-btn--lime:hover {
+  background: #d9ff4d;
+  border-color: #d9ff4d;
+  box-shadow: 0 8px 30px rgba(204, 255, 0, 0.25);
+}
+
+/* --- footer ------------------------------------------------------------------------------------------------- */
+
+[data-theme='electroform'] .ef-footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding: 28px var(--ef-pad) 38px;
+  border-top: 1px solid var(--ef-line);
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--ef-faint);
+}
+
+/* --- toast (easter eggs) ------------------------------------------------------------------------------------ */
+
+[data-theme='electroform'] .ef-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 34px;
+  z-index: 90;
+  padding: 11px 20px;
+  font-family: var(--ef-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  color: var(--ef-lime);
+  background: rgba(10, 10, 12, 0.92);
+  border: 1px solid rgba(204, 255, 0, 0.5);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px);
+  pointer-events: none;
+  transition:
+    opacity 300ms ease,
+    transform 300ms var(--ef-ease);
+}
+
+[data-theme='electroform'] .ef-toast.is-on {
+  opacity: 1;
+  transform: translateX(-50%);
+}
+
+/* --- chrome-gradient text: solid high-contrast fallback ------------------------------------------------------ */
+
+/* Engines without background-clip:text would otherwise render transparent
+   glyphs over an opaque gradient box — fall back to solid silver. */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  [data-theme='electroform'] .ef-section__title,
+  [data-theme='electroform'] .ef-hero__line--solid .ef-hero__ltr,
+  [data-theme='electroform'] .ef-hero__line--ghost .ef-hero__ltr,
+  [data-theme='electroform'] .ef-hero__stats strong,
+  [data-theme='electroform'] .ef-about__stats strong,
+  [data-theme='electroform'] .ef-hobby__numeral,
+  [data-theme='electroform'] .ef-exp__company,
+  [data-theme='electroform'] .ef-projrow.is-featured .ef-projrow__name,
+  [data-theme='electroform'] .ef-metrics strong,
+  [data-theme='electroform'] .ef-contact__heading,
+  [data-theme='electroform'] .ef-contact__email {
+    background: none;
+    color: #e9eef6;
+    -webkit-text-stroke: 0;
+  }
+}
+
+/* --- mobile ------------------------------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  [data-theme='electroform'] .ef-top {
+    padding: 12px 16px;
+  }
+
+  [data-theme='electroform'] .ef-top__word,
+  [data-theme='electroform'] .ef-top__loc {
+    display: none;
+  }
+
+  /* side dot-nav becomes a compact top strip under the header — glass
+     scrim keeps the dots legible over body text mid-scroll */
+  [data-theme='electroform'] .ef-nav {
+    top: 56px;
+    right: 0;
+    left: 0;
+    transform: none;
+    padding: 2px 12px;
+    background: linear-gradient(
+      180deg,
+      rgba(10, 10, 12, 0.92),
+      rgba(10, 10, 12, 0.62)
+    );
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--ef-line);
+  }
+
+  [data-theme='electroform'] .ef-nav__list {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  /* ~44px-tall tap targets around each 7px dot */
+  [data-theme='electroform'] .ef-nav__list a {
+    padding: 12px 8px;
+  }
+
+  [data-theme='electroform'] .ef-nav__label {
+    display: none;
+  }
+
+  [data-theme='electroform'] .ef-nav__labitem {
+    margin: 0 0 0 8px;
+  }
+
+  [data-theme='electroform'] .ef-nav__lab {
+    writing-mode: horizontal-tb;
+  }
+
+  [data-theme='electroform'] .ef-hero {
+    padding-top: 120px;
+    /* blob sits centered on mobile — widen the scrim under the text */
+    background: radial-gradient(
+      140% 80% at 50% 52%,
+      rgba(6, 7, 10, 0.74),
+      rgba(6, 7, 10, 0.3) 64%,
+      rgba(6, 7, 10, 0) 86%
+    );
+  }
+
+  [data-theme='electroform'] .ef-hero__line {
+    font-size: clamp(2.6rem, 15.5vw, 5rem);
+  }
+
+  [data-theme='electroform'] .ef-hero__line--ghost {
+    margin-left: 9vw;
+  }
+
+  [data-theme='electroform'] .ef-hero__stats {
+    gap: 22px 30px;
+  }
+
+  [data-theme='electroform'] .ef-about__grid {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='electroform'] .ef-about__portrait {
+    max-width: 320px;
+  }
+
+  [data-theme='electroform'] .ef-about__stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  [data-theme='electroform'] .ef-xprow__btn {
+    grid-template-columns: 2.2em minmax(0, 1fr) 1.4em;
+    row-gap: 4px;
+  }
+
+  [data-theme='electroform'] .ef-xprow__tag {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: left;
+  }
+
+  [data-theme='electroform'] .ef-xprow__plus {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  [data-theme='electroform'] .ef-projrow__btn {
+    grid-template-columns: 2.4em minmax(0, 1fr) 1.6em;
+    row-gap: 6px;
+  }
+
+  [data-theme='electroform'] .ef-projrow__tagline {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  [data-theme='electroform'] .ef-projrow__plus {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  [data-theme='electroform'] .ef-awards__cols {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='electroform'] .ef-writing__grid {
+    grid-template-columns: 1fr;
+  }
+
+  [data-theme='electroform'] .ef-contact__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  [data-theme='electroform'] .ef-btn {
+    text-align: center;
+  }
+
+  [data-theme='electroform'] .ef-footer {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* --- reduced motion ---------------------------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='electroform'] .ef-intro,
+  [data-theme='electroform'] .ef-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    transition: none !important;
+  }
+
+  [data-theme='electroform'] .ef-marquee__track,
+  [data-theme='electroform'] .ef-top__avail i,
+  [data-theme='electroform'] .ef-hero__scrollline::after {
+    animation: none !important;
+  }
+
+  /* A frozen marquee would clip every skill past the first viewport-width —
+     reflow each strip as a static, fully visible wrapped list instead. */
+  [data-theme='electroform'] .ef-marquee__track {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  [data-theme='electroform'] .ef-marquee__inner {
+    white-space: normal;
+    flex-wrap: wrap;
+    padding-right: 0;
+  }
+
+  [data-theme='electroform'] .ef-marquee__inner[aria-hidden='true'] {
+    display: none;
+  }
+
+  [data-theme='electroform'] .ef-marquee__clip {
+    width: auto;
+    margin-left: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  [data-theme='electroform'] .ef-hobby:hover,
+  [data-theme='electroform'] .ef-draft:hover,
+  [data-theme='electroform'] .ef-btn:hover {
+    transform: none;
+  }
+
+  /* eggs: katakana swap is instant, toast appears without sliding */
+  [data-theme='electroform'] .ef-hero__ltr,
+  [data-theme='electroform'] .ef-toast {
+    transition: none !important;
+  }
+
+  [data-theme='electroform'] .ef-hero__ltr.is-flip {
+    transform: none;
+    opacity: 1;
+  }
+}

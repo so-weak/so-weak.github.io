@@ -1,0 +1,756 @@
+/* ==========================================================================
+   Article page — long-form reading experience for /article.html.
+
+   Scoping: everything visual lives under `.article` (the #article-root
+   element) or `.article-body` (the <body>). Theme stylesheets are NOT
+   loaded on this page, so the per-[data-theme] accent palettes below are
+   self-contained. The inline SVG diagrams (diagrams.ts) are styled by the
+   `.dg-*` rules below and follow the `--art-*` palette live.
+
+   Type: Fraunces (display / pull quotes) · Hanken Grotesk (body)
+         · JetBrains Mono (code, labels, meta).
+   ========================================================================== */
+
+/* --- palette: default + per-theme accents ---------------------------------- */
+
+:root {
+  /* electroform (default): near-black chrome + acid lime */
+  --art-bg: #0a0a0c;
+  --art-surface: #14161d;
+  --art-surface-2: #1a1d26;
+  --art-ink: #e6ebf3;
+  --art-soft: #c3cbd9;
+  --art-muted: #97a0b1; /* 6.6:1 on --art-bg — AA for small text */
+  --art-edge: #6b7486;
+  --art-line: rgba(198, 207, 221, 0.14);
+  --art-accent: #ccff00;
+  --art-accent-ink: #ccff00; /* 14.9:1 on --art-bg */
+  --art-accent-wash: #232a0d;
+  --art-serif: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --art-sans: 'Hanken Grotesk Variable', 'Helvetica Neue', system-ui, sans-serif;
+  --art-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace;
+}
+
+:root[data-theme='editorial'] {
+  /* warm paper + vermilion */
+  --art-bg: #f4f1ec;
+  --art-surface: #ece7df;
+  --art-surface-2: #e9e3d8;
+  --art-ink: #1c1a18;
+  --art-soft: #3d3833;
+  --art-muted: #5f594f; /* 6.6:1 on paper */
+  --art-edge: #877f72;
+  --art-line: rgba(28, 26, 24, 0.18);
+  --art-accent: #e0451f; /* rules and ornament — not small text */
+  --art-accent-ink: #c23a17; /* 4.8:1 on paper — AA for text */
+  --art-accent-wash: #f6ddd2;
+}
+
+:root[data-theme='terminal'] {
+  /* phosphor CRT */
+  --art-bg: #050505;
+  --art-surface: #0b130d;
+  --art-surface-2: #0e1810;
+  --art-ink: #c5f2cf;
+  --art-soft: #a9ddb6;
+  --art-muted: #7fc093; /* 8.4:1 on near-black */
+  --art-edge: #3f8f5c;
+  --art-line: rgba(51, 255, 102, 0.2);
+  --art-accent: #33ff66;
+  --art-accent-ink: #33ff66; /* 12.5:1 on near-black */
+  --art-accent-wash: #0c2c16;
+}
+
+:root[data-theme='aurora'] {
+  /* pastel dawn + gold */
+  --art-bg: #f7f5fb;
+  --art-surface: #efebf8;
+  --art-surface-2: #ebe6f5;
+  --art-ink: #2a2438;
+  --art-soft: #453d59;
+  --art-muted: #5d566f; /* 6.7:1 on base */
+  --art-edge: #79708d;
+  --art-line: rgba(42, 36, 56, 0.16);
+  --art-accent: #b8945f; /* ornament gold */
+  --art-accent-ink: #8a6a3c; /* 4.6:1 on base — AA for text */
+  --art-accent-wash: #efe3cf;
+}
+
+/* --- page chrome ------------------------------------------------------------ */
+
+.article-body {
+  background: var(--art-bg);
+  color: var(--art-ink);
+  font-family: var(--art-sans);
+}
+
+.article-body ::selection {
+  background: var(--art-accent);
+  color: var(--art-bg);
+}
+
+.article-body :focus-visible {
+  outline: 2px solid var(--art-accent-ink);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 50;
+  padding: 0.65rem 1.1rem;
+  font: 600 0.85rem/1 var(--art-mono);
+  letter-spacing: 0.04em;
+  color: var(--art-bg);
+  background: var(--art-ink);
+  border-radius: 4px;
+  text-decoration: none;
+  transform: translateY(-300%);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+.article {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- top bar ----------------------------------------------------------------- */
+
+.art-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem clamp(1.25rem, 4vw, 3rem);
+  border-bottom: 1px solid var(--art-line);
+  font-family: var(--art-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+}
+
+.art-back {
+  color: var(--art-accent-ink);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.art-back:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.art-site {
+  color: var(--art-muted);
+  text-transform: uppercase;
+}
+
+/* --- article head -------------------------------------------------------------- */
+
+#article-main {
+  outline: none;
+  flex: 1;
+  width: 100%;
+  padding: clamp(2.75rem, 7vh, 5.5rem) clamp(1.25rem, 5vw, 3rem) 0;
+}
+
+.art-article {
+  width: 100%;
+  max-width: 68ch;
+  margin-inline: auto;
+}
+
+.art-head {
+  margin-bottom: clamp(2.5rem, 6vh, 4rem);
+}
+
+.art-kicker {
+  font: 500 0.8rem/1.4 var(--art-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--art-accent-ink);
+  margin-bottom: 1.4rem;
+}
+
+.art-head h1 {
+  font-family: var(--art-serif);
+  font-weight: 560;
+  font-variation-settings: 'opsz' 110;
+  font-size: clamp(2.15rem, 1.5rem + 3.2vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  margin-bottom: 1.5rem;
+}
+
+.art-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font: 400 0.82rem/1.5 var(--art-mono);
+  letter-spacing: 0.03em;
+  color: var(--art-muted);
+}
+
+/* --- prose ------------------------------------------------------------------------ */
+
+.art-prose {
+  font-size: clamp(1.05rem, 1rem + 0.25vw, 1.17rem);
+  line-height: 1.74;
+  color: var(--art-soft);
+}
+
+.art-prose .art-lede {
+  font-family: var(--art-serif);
+  font-weight: 460;
+  font-variation-settings: 'opsz' 40;
+  font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.55rem);
+  line-height: 1.5;
+  color: var(--art-ink);
+  margin-bottom: 2.4rem;
+}
+
+.art-prose p + p {
+  margin-top: 1.35em;
+}
+
+.art-prose section {
+  margin-top: 3.4rem;
+}
+
+.art-prose h2 {
+  position: relative;
+  font-family: var(--art-serif);
+  font-weight: 580;
+  font-size: clamp(1.55rem, 1.3rem + 1vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--art-ink);
+  padding-top: 1.7rem;
+  border-top: 1px solid var(--art-line);
+  margin-bottom: 1.4rem;
+}
+
+.art-prose h2::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 3.4rem;
+  height: 3px;
+  background: var(--art-accent);
+}
+
+.art-prose h3 {
+  font-family: var(--art-serif);
+  font-weight: 600;
+  font-size: clamp(1.2rem, 1.1rem + 0.4vw, 1.4rem);
+  line-height: 1.3;
+  color: var(--art-ink);
+  margin: 2.4rem 0 0.9rem;
+}
+
+.art-prose h2 + p,
+.art-prose h3 + p {
+  margin-top: 0;
+}
+
+.art-prose strong {
+  color: var(--art-ink);
+  font-weight: 650;
+}
+
+.art-prose a {
+  color: var(--art-accent-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+
+/* pull quotes */
+
+.art-pull {
+  margin: 2.6rem 0;
+  padding-left: 1.5rem;
+  border-left: 3px solid var(--art-accent);
+}
+
+.art-pull p {
+  font-family: var(--art-serif);
+  font-style: italic;
+  font-weight: 480;
+  font-variation-settings: 'opsz' 60;
+  font-size: clamp(1.3rem, 1.15rem + 0.8vw, 1.65rem);
+  line-height: 1.42;
+  color: var(--art-ink);
+  text-wrap: balance;
+}
+
+/* code blocks */
+
+.art-code {
+  margin: 1.7rem 0;
+  padding: 1.15rem 1.3rem;
+  background: var(--art-surface-2);
+  border: 1px solid var(--art-line);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-family: var(--art-mono);
+  font-size: 0.84rem;
+  line-height: 1.62;
+  color: var(--art-ink);
+  tab-size: 2;
+}
+
+.art-code code {
+  font-family: inherit;
+}
+
+/* --- diagrams ------------------------------------------------------------------------- */
+
+.art-figure {
+  /* gentle breakout: wider than the 68ch measure, centered without transforms
+     (reveal animations own `transform`) */
+  width: min(86vw, 52rem);
+  margin: 2.7rem calc((100% - min(86vw, 52rem)) / 2);
+}
+
+.art-diagram-scroll {
+  overflow-x: auto;
+  background: var(--art-surface);
+  border: 1px solid var(--art-line);
+  border-radius: 12px;
+  padding: clamp(0.9rem, 2.5vw, 1.6rem);
+}
+
+.art-diagram {
+  min-height: 200px;
+}
+
+.art-diagram svg {
+  display: block;
+  margin-inline: auto;
+  width: 100%;
+  height: auto;
+  /* below this the labels stop being legible — let the wrapper scroll-x */
+  min-width: 620px;
+  color: var(--art-ink);
+}
+
+/* --- diagram design language (engineering drawing) ----------------------- */
+
+.dg-grid-dot {
+  fill: var(--art-edge);
+  opacity: 0.26;
+}
+
+.dg-node text,
+.dg-elabel,
+.dg-frame-label {
+  font-family: var(--art-mono);
+  pointer-events: none;
+  user-select: none;
+}
+
+.dg-label {
+  font-size: 11px;
+  letter-spacing: 0.01em;
+  fill: var(--art-ink);
+}
+
+.dg-sub {
+  font-size: 9.5px;
+  fill: var(--art-muted);
+}
+
+.dg-shape {
+  fill: var(--art-surface-2);
+  stroke: var(--art-edge);
+  stroke-width: 1.5;
+  transition:
+    stroke 180ms ease,
+    fill 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.dg-tone-defense > .dg-shape {
+  stroke: var(--art-accent-ink);
+  fill: var(--art-accent-wash);
+}
+
+.dg-tone-refuse > .dg-shape {
+  stroke: var(--art-accent-ink);
+  stroke-dasharray: 5 3;
+  fill: var(--art-surface);
+}
+
+.dg-tone-accent > .dg-shape {
+  stroke: var(--art-accent-ink);
+  stroke-width: 2;
+  fill: var(--art-accent-wash);
+}
+
+/* edges */
+
+.dg-line,
+.dg-line--dashed {
+  fill: none;
+  stroke: var(--art-edge);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transition:
+    stroke 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.dg-head {
+  fill: var(--art-edge);
+  stroke: none;
+  transition: fill 180ms ease;
+}
+
+.dg-edge.dg-tone-refuse .dg-line,
+.dg-edge.dg-tone-refuse .dg-line--dashed {
+  stroke: var(--art-accent-ink);
+}
+
+.dg-edge.dg-tone-refuse .dg-head {
+  fill: var(--art-accent-ink);
+}
+
+.dg-elabel {
+  font-size: 9.5px;
+  letter-spacing: 0.02em;
+  fill: var(--art-muted);
+  paint-order: stroke;
+  stroke: var(--art-surface);
+  stroke-width: 6;
+  stroke-linejoin: round;
+}
+
+.dg-lifeline .dg-line--dashed {
+  stroke-width: 1;
+  opacity: 0.55;
+}
+
+.dg-frame {
+  fill: none;
+  stroke: var(--art-edge);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+  opacity: 0.6;
+}
+
+.dg-frame-label {
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--art-muted);
+}
+
+.dg-frame-line .dg-line--dashed {
+  stroke-width: 1;
+  opacity: 0.5;
+}
+
+.dg-spine {
+  fill: none;
+  stroke: none;
+}
+
+/* hover / focus: highlight a node + its connected edges */
+
+.dg-node {
+  cursor: default;
+  outline: none;
+}
+
+.dg-node:hover > .dg-shape,
+.dg-node:focus-visible > .dg-shape,
+.dg-node.is-hot > .dg-shape {
+  stroke: var(--art-accent-ink);
+  stroke-width: 2.5;
+  fill: var(--art-accent-wash);
+}
+
+.dg-node:focus-visible {
+  outline: 2px solid var(--art-accent-ink);
+  outline-offset: 4px;
+}
+
+.dg-edge.is-hot .dg-line,
+.dg-edge.is-hot .dg-line--dashed {
+  stroke: var(--art-accent-ink);
+  stroke-width: 2.25;
+}
+
+.dg-edge.is-hot .dg-head {
+  fill: var(--art-accent-ink);
+}
+
+.dg-edge.is-hot .dg-elabel {
+  fill: var(--art-accent-ink);
+}
+
+/* draw-on-scroll: edges draw via dashoffset (pathLength="1"), dashed lines
+   and arrowheads fade, nodes rise with stagger (--i set inline) */
+
+.dg .dg-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition:
+    stroke-dashoffset 800ms var(--ease-out-expo) calc(var(--i, 0) * 55ms),
+    stroke 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.dg.is-drawn .dg-line {
+  stroke-dashoffset: 0;
+}
+
+.dg .dg-line--dashed {
+  opacity: 0;
+  transition:
+    opacity 650ms ease calc(var(--i, 0) * 55ms),
+    stroke 180ms ease,
+    stroke-width 180ms ease;
+}
+
+.dg.is-drawn .dg-line--dashed {
+  opacity: 1;
+}
+
+.dg.is-drawn .dg-lifeline .dg-line--dashed {
+  opacity: 0.55;
+}
+
+.dg.is-drawn .dg-frame-line .dg-line--dashed {
+  opacity: 0.5;
+}
+
+.dg .dg-head {
+  opacity: 0;
+  transition:
+    opacity 280ms ease calc(var(--i, 0) * 55ms + 480ms),
+    fill 180ms ease;
+}
+
+.dg.is-drawn .dg-head {
+  opacity: 1;
+}
+
+.dg .dg-node {
+  opacity: 0;
+  transform: translateY(7px) scale(0.96);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 550ms var(--ease-out-expo) calc(var(--i, 0) * 55ms),
+    transform 550ms var(--ease-out-expo) calc(var(--i, 0) * 55ms);
+}
+
+.dg.is-drawn .dg-node {
+  opacity: 1;
+  transform: none;
+}
+
+.dg .dg-frame-group,
+.dg .dg-elabel {
+  opacity: 0;
+  transition: opacity 600ms ease 350ms;
+}
+
+.dg.is-drawn .dg-frame-group,
+.dg.is-drawn .dg-elabel {
+  opacity: 1;
+}
+
+/* flowing particles (SMIL <animateMotion>, begun on reveal) */
+
+.dg-particle {
+  fill: var(--art-accent);
+  visibility: hidden;
+}
+
+.dg.is-drawn .dg-particle {
+  visibility: visible;
+}
+
+.dg-particle--refuse {
+  fill: var(--art-accent-ink);
+}
+
+.dg[data-static] .dg-particle {
+  display: none;
+}
+
+/* the fixed, aria-live caption slot under each diagram */
+
+.art-diagram-info {
+  min-height: 2.8em;
+  margin-top: 0.8rem;
+  padding-inline: 0.5rem;
+  font: 400 0.78rem/1.55 var(--art-mono);
+  letter-spacing: 0.02em;
+  color: var(--art-muted);
+  text-align: center;
+  text-wrap: balance;
+  transition: color 180ms ease;
+}
+
+.art-diagram-info.is-active {
+  color: var(--art-soft);
+}
+
+.art-figure figcaption {
+  margin-top: 0.4rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--art-line);
+  font: 400 0.8rem/1.6 var(--art-mono);
+  letter-spacing: 0.02em;
+  color: var(--art-muted);
+  text-align: center;
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg .dg-node,
+  .dg .dg-head,
+  .dg .dg-frame-group,
+  .dg .dg-elabel {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .dg .dg-line {
+    stroke-dashoffset: 0;
+    transition: none;
+  }
+
+  .dg .dg-line--dashed {
+    opacity: 1;
+    transition: none;
+  }
+
+  .dg-particle {
+    display: none;
+  }
+}
+
+/* --- next-up teasers -------------------------------------------------------------------- */
+
+.art-next {
+  width: 100%;
+  max-width: 68ch;
+  margin: 4.5rem auto 0;
+  padding-top: 2.4rem;
+  border-top: 1px solid var(--art-line);
+}
+
+.art-next h2 {
+  font-family: var(--art-serif);
+  font-weight: 580;
+  font-size: 1.35rem;
+  color: var(--art-ink);
+  margin-bottom: 1.4rem;
+}
+
+.art-next-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+  gap: 1rem;
+}
+
+.art-next-card {
+  padding: 1.2rem 1.3rem 1.35rem;
+  background: var(--art-surface);
+  border: 1px solid var(--art-line);
+  border-radius: 10px;
+}
+
+.art-next-status {
+  font: 500 0.72rem/1.4 var(--art-mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--art-accent-ink);
+  margin-bottom: 0.65rem;
+}
+
+.art-next-title {
+  font-family: var(--art-serif);
+  font-weight: 580;
+  font-size: 1.12rem;
+  line-height: 1.3;
+  color: var(--art-ink);
+  margin-bottom: 0.55rem;
+  text-wrap: balance;
+}
+
+.art-next-blurb {
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--art-muted);
+}
+
+/* --- footer -------------------------------------------------------------------------------- */
+
+.art-foot {
+  margin-top: 4.5rem;
+  padding: 1.6rem clamp(1.25rem, 4vw, 3rem) 2rem;
+  border-top: 1px solid var(--art-line);
+  font: 400 0.82rem/1.7 var(--art-mono);
+  letter-spacing: 0.03em;
+  color: var(--art-muted);
+  text-align: center;
+}
+
+.art-foot a {
+  color: var(--art-accent-ink);
+  text-decoration: none;
+}
+
+.art-foot a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+/* --- reveals (JS adds .art-reveal only when motion is allowed) ------------------------------- */
+
+.art-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 700ms var(--ease-out-expo),
+    transform 700ms var(--ease-out-expo);
+}
+
+.art-reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .art-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* --- small screens ----------------------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+  .art-figure {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .art-pull {
+    padding-left: 1.1rem;
+  }
+}
