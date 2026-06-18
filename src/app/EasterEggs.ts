@@ -45,7 +45,7 @@ const TOAST_LEAVE_MS = 350 // matches --dur-base + slack
 const MAX_TOASTS = 4
 
 const SOWEAK_WORD = 'soweak'
-const SOWEAK_REPO = 'https://github.com/SoubhikGhosh/soweak'
+const SOWEAK_REPO = 'https://github.com/so-weak/soweak'
 
 const STYLE_ID = 'sg-easter-eggs-style'
 
@@ -148,7 +148,7 @@ export class EasterEggs {
     this.typedBuffer = ''
 
     if (!this.deps.viewport.reducedMotion) this.flashGlitch()
-    this.toast(`soweak framework: armed. // github.com/SoubhikGhosh/soweak`, {
+    this.toast(`soweak framework: armed. // github.com/so-weak/soweak`, {
       href: SOWEAK_REPO,
       duration: 7_000,
     })

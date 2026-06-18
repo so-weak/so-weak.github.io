@@ -16,7 +16,7 @@ export const siteContent: SiteContent = {
       'I build AI that ships: four years across Full Stack and AI/ML, from biometrics to LLM agents. 800+ people use it every day. Guitarist and tarot reader between deployments.',
     location: 'Bengaluru, India',
     email: '99ghoshsoubhik@gmail.com',
-    github: 'https://github.com/SoubhikGhosh',
+    github: 'https://github.com/so-weak',
     linkedin: 'https://www.linkedin.com/in/soweak',
     instagram: 'https://www.instagram.com/_so_weak_/',
     resumeUrl: '/resume/Soubhik-Ghosh-Resume.pdf',
@@ -256,7 +256,7 @@ export const siteContent: SiteContent = {
         'Block, redact, transform, or route-to-approval at every pipeline boundary, with audit trails throughout.',
         'LangChain/OpenAI/Gemini adapters plus a red-team CLI for adversarial testing.',
       ],
-      links: [{ label: 'GitHub', url: 'https://github.com/SoubhikGhosh/soweak' }],
+      links: [{ label: 'GitHub', url: 'https://github.com/so-weak/soweak' }],
       metrics: [
         { label: 'registries', value: 'PyPI + npm' },
         { label: 'alignment', value: 'OWASP LLM Top 10' },
@@ -275,7 +275,7 @@ export const siteContent: SiteContent = {
         'Runtime interpreter with credential vault and per-task audit trail.',
         'Remote-execution spine over WebSockets drives agents across operating systems.',
       ],
-      links: [{ label: 'GitHub', url: 'https://github.com/SoubhikGhosh/aakaar' }],
+      links: [{ label: 'GitHub', url: 'https://github.com/so-weak/aakaar' }],
     },
     {
       name: 'AI Fabric: TradeOps',
