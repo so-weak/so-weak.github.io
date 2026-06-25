@@ -100,7 +100,6 @@ function sidebar(c: SiteContent): string {
       <ul>${tree}</ul>
     </nav>
     <div class="trm-side__foot">
-      <a class="trm-cmdlink" href="${esc(identity.resumeUrl)}" download>scp resume.pdf ./</a>
       <a class="trm-cmdlink" href="/playground.html">./lab --run</a>
       <a class="trm-cmdlink" href="${esc(identity.github)}" target="_blank" rel="noopener noreferrer">ssh github ↗</a>
       <a class="trm-cmdlink" href="${esc(identity.linkedin)}" target="_blank" rel="noopener noreferrer">ssh linkedin ↗</a>
@@ -228,13 +227,30 @@ function logEntry(e: ExperienceEntry, idx: number): string {
           <span class="trm-log__tag">[${esc(p.tag)}]</span>
           <span class="trm-log__toggle" aria-hidden="true"></span>
         </summary>
-        <div class="trm-log__body">
+        ${
+          p.redacted
+            ? `<div class="trm-log__body trm-log__body--seal" aria-label="Technical details withheld under banking confidentiality">
+          <div class="trm-seal__bars" aria-hidden="true">
+            <span class="trm-seal__bar" style="--w:78%">████████ ▓▓▓▓ ███████████ ▓▓ █████</span>
+            <span class="trm-seal__bar" style="--w:54%">▓▓▓▓▓▓ ██████████ ▓▓▓ ████</span>
+            <span class="trm-seal__bar" style="--w:88%">███████████ ▓▓▓▓▓▓ █████████ ▓▓ ████████ ▓▓▓</span>
+            <span class="trm-seal__bar" style="--w:40%">██████ ▓▓▓ ████████</span>
+          </div>
+          <p class="trm-seal__cmd trm-dim" aria-hidden="true"><span class="trm-prompt">$</span> gpg --decrypt deployments.gpg <span class="trm-dim">→</span> clearance: <span class="trm-m">CEO/BOARD</span></p>
+          <span class="trm-seal__stamp trm-badge trm-badge--amber" aria-hidden="true">[REDACTED]</span>
+        </div>`
+            : `<div class="trm-log__body">
           <ul>${p.points.map((pt) => `<li>${hl(pt)}</li>`).join('')}</ul>
           ${chips(p.stack)}
-        </div>
+        </div>`
+        }
       </details>`,
     )
     .join('')
+
+  const projHead = e.redactionNote
+    ? `└─ deployments (${e.projects?.length ?? 0}) · CLASSIFIED`
+    : `└─ deployments (${e.projects?.length ?? 0})`
 
   return `
   <article class="trm-panel trm-log trm-reveal" style="--i:${idx}">
@@ -244,7 +260,7 @@ function logEntry(e: ExperienceEntry, idx: number): string {
     </header>
     <p class="trm-log__summary">${hl(e.summary)}</p>
     ${highlights}
-    ${projects ? `<div class="trm-log__projects"><p class="trm-dim trm-log__projhead" aria-hidden="true">└─ deployments (${e.projects?.length ?? 0})</p>${projects}</div>` : ''}
+    ${projects ? `<div class="trm-log__projects"><p class="trm-dim trm-log__projhead" aria-hidden="true">${esc(projHead)}</p>${e.redactionNote ? `<p class="trm-dim trm-log__rnote"># ${esc(e.redactionNote)}</p>` : ''}${projects}</div>` : ''}
   </article>`
 }
 
@@ -516,7 +532,6 @@ function contact(c: SiteContent): string {
     { cmd: `ssh github.com/${ghHandle}`, href: identity.github, note: 'inspect source', ext: true, dl: false },
     { cmd: `ssh linkedin.com/in/${linkedHandle}`, href: identity.linkedin, note: 'establish uplink', ext: true, dl: false },
     { cmd: `open instagram.com/_so_weak_`, href: identity.instagram, note: 'visual feed', ext: true, dl: false },
-    { cmd: 'scp resume.pdf ./', href: identity.resumeUrl, note: 'download résumé', ext: false, dl: true },
     { cmd: './lab --run', href: '/playground.html', note: 'enter the playground', ext: false, dl: false },
   ]
     .map(

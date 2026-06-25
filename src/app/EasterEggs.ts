@@ -166,14 +166,12 @@ export class EasterEggs {
       '███████║ ╚██████╔╝',
       '╚══════╝  ╚═════╝ ',
     ].join('\n')
-    const resumeUrl = new URL(identity.resumeUrl, window.location.origin).href
 
     console.log(
       `%c${monogram}\n\n` +
         `%c${identity.name} — ${identity.role}%c\n\n` +
         `GitHub    ${identity.github}\n` +
-        `LinkedIn  ${identity.linkedin}\n` +
-        `Résumé    ${resumeUrl}\n\n` +
+        `LinkedIn  ${identity.linkedin}\n\n` +
         `%cpsst — try the Konami code. or type soweak. there is more hidden here.`,
       'color:#8a8a93;font-family:monospace;line-height:1.25',
       'color:#e8e8ec;font-weight:600;font-size:13px',

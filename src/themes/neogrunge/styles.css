@@ -219,7 +219,7 @@
 [data-theme='neogrunge'] .ng-masthead__nav {
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 [data-theme='neogrunge'] .ng-masthead__nav ul {
@@ -245,11 +245,6 @@
 
 [data-theme='neogrunge'] .ng-masthead__lab {
   color: var(--ng-red) !important;
-}
-
-[data-theme='neogrunge'] .ng-masthead__resume {
-  text-decoration: none;
-  margin-left: auto;
 }
 
 /* --- burst ornament -------------------------------------------------------- */
@@ -868,6 +863,92 @@
   padding: 3px 8px;
 }
 
+/* --- classified intel (redaction) ------------------------------------------ */
+/* HDFC banking confidentiality: titles stay, intel is barred. Comic censor
+   strip — a slammed black marker bar with a "CLASSIFIED!" burst + ink stamp,
+   the real note read out in marker beneath. */
+
+[data-theme='neogrunge'] .ng-classified {
+  margin-top: 16px;
+  border: 3px solid var(--ng-red);
+  background: var(--ng-ink);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Halftone wash so the strip reads as printed comic ink, not a flat box */
+[data-theme='neogrunge'] .ng-classified::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(230,57,70,0.28) 1.5px, transparent 1.5px);
+  background-size: 9px 9px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The black marker / censor bar across the top */
+[data-theme='neogrunge'] .ng-classified__bar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--ng-ink);
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(230,57,70,0.20) 0,
+    rgba(230,57,70,0.20) 6px,
+    transparent 6px,
+    transparent 14px
+  );
+  border-bottom: 3px solid var(--ng-red);
+}
+
+[data-theme='neogrunge'] .ng-classified__burst {
+  font-family: 'Bangers', cursive;
+  font-size: clamp(18px, 2.6vw, 26px);
+  letter-spacing: 0.1em;
+  color: var(--ng-yellow);
+  -webkit-text-stroke: 2px var(--ng-ink);
+  paint-order: stroke fill;
+  text-shadow: 3px 3px 0 var(--ng-red);
+  transform: rotate(-4deg);
+  display: inline-block;
+  animation: ng-classified-throb 1.8s ease-in-out infinite;
+}
+
+@keyframes ng-classified-throb {
+  0%, 100% { transform: rotate(-4deg) scale(1); }
+  50%       { transform: rotate(-4deg) scale(1.06); }
+}
+
+/* Marker-stamped "INTEL REDACTED" — looks rubber-stamped onto the page */
+[data-theme='neogrunge'] .ng-classified__stamp {
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(11px, 1.4vw, 14px);
+  letter-spacing: 0.18em;
+  color: var(--ng-red);
+  border: 2px solid var(--ng-red);
+  padding: 3px 9px;
+  transform: rotate(2deg);
+  text-transform: uppercase;
+  margin-left: auto;
+}
+
+[data-theme='neogrunge'] .ng-classified__note {
+  position: relative;
+  z-index: 1;
+  font-family: 'Permanent Marker', cursive;
+  font-size: clamp(12px, 1.3vw, 14px);
+  letter-spacing: 0.01em;
+  color: var(--ng-paper);
+  line-height: 1.55;
+  padding: 12px 16px;
+}
+
 /* --- projects covers ------------------------------------------------------- */
 
 [data-theme='neogrunge'] .ng-covers {
@@ -1379,10 +1460,6 @@
     font-size: 22px;
   }
 
-  [data-theme='neogrunge'] .ng-masthead__resume span {
-    display: none; /* hide text, keep icon/button target */
-  }
-
   [data-theme='neogrunge'] .ng-hero__name {
     font-size: clamp(56px, 22vw, 120px);
   }
@@ -1468,6 +1545,12 @@
   [data-theme='neogrunge'] .ng-action {
     animation: none;
     opacity: 1;
+  }
+
+  /* Classified burst stops throbbing but stays loud and legible */
+  [data-theme='neogrunge'] .ng-classified__burst {
+    animation: none;
+    transform: rotate(-4deg);
   }
 
   /* Kill cursor drift and scroll parallax offsets under reduced motion */

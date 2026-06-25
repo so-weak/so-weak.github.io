@@ -240,10 +240,6 @@ function masthead(content: SiteContent): string {
       <nav class="vg-mast__nav" aria-label="Gallery rooms">
         <ul>${links}</ul>
       </nav>
-      <a class="vg-seal" href="${content.identity.resumeUrl}" download aria-label="Download résumé (PDF)">
-        <span class="vg-seal__wax" aria-hidden="true">SG</span>
-        <span class="vg-seal__word" aria-hidden="true">Résumé</span>
-      </a>
     </header>`
 }
 
@@ -266,7 +262,6 @@ function hero(content: SiteContent): string {
       </div>
       <p class="vg-hand vg-write vg-hero__letter vg-intro" style="--d:560ms" data-speed="0.07">dear Theo — I have begun teaching the machines to see.</p>
       <div class="vg-hero__actions vg-intro" style="--d:680ms">
-        <a class="vg-btn" href="${identity.resumeUrl}" download>Take the catalogue — r&eacute;sum&eacute; <span aria-hidden="true">↓</span></a>
         <a class="vg-hero__enter" href="#about" data-nav>Enter Room I <span aria-hidden="true">→</span></a>
       </div>
       <div class="vg-hero__cue" aria-hidden="true">
@@ -338,12 +333,29 @@ function experience(content: SiteContent): string {
         .join('')
       // Each work keeps its substance: the lead checklist point and the
       // pigments (stack) ride the chip — several of these works hang in no
-      // other room of the museum.
+      // other room of the museum. For redacted deployments the plaque keeps
+      // its engraved title (name + tag) but its lower half is a canvas turned
+      // to the wall, stamped PRIVATE COLLECTION: the detail is lent away, not
+      // lost. Nothing of the withheld stack/points is emitted to source.
       const works = e.projects
         ? `<ul class="vg-works" aria-label="Works shown in this room">
             ${e.projects
-              .map(
-                (p) => `
+              .map((p) =>
+                p.redacted
+                  ? `
+                  <li class="vg-plaque vg-plaque--chip vg-plaque--withheld" aria-label="${p.name} — ${p.tag}. Technical details withheld under banking confidentiality.">
+                    <strong aria-hidden="true">${p.name}</strong>
+                    <span aria-hidden="true">${p.tag}</span>
+                    <span class="vg-withheld" aria-hidden="true">
+                      <span class="vg-withheld__back">
+                        <span class="vg-withheld__bar vg-withheld__bar--h"></span>
+                        <span class="vg-withheld__bar vg-withheld__bar--v"></span>
+                        <span class="vg-withheld__stamp">PRIVATE COLLECTION</span>
+                      </span>
+                      <em class="vg-withheld__line">Detail withheld · lent from a private collection</em>
+                    </span>
+                  </li>`
+                  : `
                   <li class="vg-plaque vg-plaque--chip">
                     <strong>${p.name}</strong>
                     <span>${p.tag}</span>
@@ -353,6 +365,11 @@ function experience(content: SiteContent): string {
               )
               .join('')}
           </ul>`
+        : ''
+      // The withholding, in the museum's own hand — a letter-to-Theo margin
+      // note (only present on the entry that carries one, i.e. HDFC).
+      const redactionNote = e.redactionNote
+        ? `<p class="vg-hand vg-write vg-room__withheldnote vg-reveal" style="--d:300ms" data-speed="0.045">${e.redactionNote}</p>`
         : ''
       const note = ROOM_NOTES[i]
         ? `<p class="vg-hand vg-write vg-room__note vg-reveal" style="--d:220ms" data-speed="0.05">${ROOM_NOTES[i]}</p>`
@@ -368,6 +385,7 @@ function experience(content: SiteContent): string {
             </header>
             <ul class="vg-cat">${highlights}</ul>
             ${works}
+            ${redactionNote}
           </article>
           ${note}
         </li>`
@@ -589,7 +607,6 @@ function contact(content: SiteContent): string {
         <li><a class="vg-plaque vg-plaque--link" href="${identity.linkedin}" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a></li>
         <li><a class="vg-plaque vg-plaque--link" href="${identity.instagram}" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a></li>
         <li><a class="vg-plaque vg-plaque--link" href="/playground.html">Conservation Lab <span aria-hidden="true">✦</span></a></li>
-        <li><a class="vg-plaque vg-plaque--link" href="${identity.resumeUrl}" download>R&eacute;sum&eacute; <span aria-hidden="true">↓</span></a></li>
       </ul>
     </section>`
 }

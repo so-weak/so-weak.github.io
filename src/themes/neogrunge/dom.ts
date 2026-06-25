@@ -108,9 +108,6 @@ function masthead(content: SiteContent): string {
       <nav class="ng-masthead__nav" aria-label="Sections">
         <ul>${links}<li><a class="ng-masthead__lab" href="/playground.html">LAB ↗</a></li></ul>
       </nav>
-      <a class="ng-masthead__resume" href="${esc(content.identity.resumeUrl)}" download aria-label="Download résumé">
-        <span class="ng-burst ng-burst--sm" aria-hidden="true">CV!</span>
-      </a>
     </header>
   `
 }
@@ -156,7 +153,6 @@ function hero(content: SiteContent): string {
 
         <div class="ng-hero__action ng-panel-reveal" style="--pi:4">
           <a class="ng-btn ng-btn--primary" href="#ng-about">READ ON ↓</a>
-          <a class="ng-btn" href="${esc(identity.resumeUrl)}" download>RÉSUMÉ ↓</a>
         </div>
 
         <!-- Scattered onomatopoeia — hidden on mobile via CSS -->
@@ -227,6 +223,15 @@ function experience(content: SiteContent): string {
     const tags = e.highlights.map((h) =>
       `<li class="ng-tag">${esc(h)}</li>`
     ).join('')
+    const classified = e.redactionNote
+      ? `<div class="ng-classified" role="group" aria-label="Technical details withheld under banking confidentiality">
+            <div class="ng-classified__bar" aria-hidden="true">
+              <span class="ng-classified__burst">CLASSIFIED!</span>
+              <span class="ng-classified__stamp">INTEL REDACTED</span>
+            </div>
+            <p class="ng-classified__note">${esc(e.redactionNote)}</p>
+          </div>`
+      : ''
     return `
       <article class="ng-issue ng-panel-reveal" style="--pi:${i}">
         <header class="ng-issue__header">
@@ -241,6 +246,7 @@ function experience(content: SiteContent): string {
         </header>
         <p class="ng-issue__summary">${esc(e.summary)}</p>
         <ul class="ng-issue__tags">${tags}</ul>
+        ${classified}
       </article>
     `
   }).join('')
@@ -417,8 +423,7 @@ function contact(content: SiteContent): string {
         <a class="ng-contact__email ng-panel-reveal" style="--pi:1" href="mailto:${esc(identity.email)}">${esc(identity.email)}</a>
         <p class="ng-contact__blurb ng-panel-reveal" style="--pi:2">${esc(ct.blurb)}</p>
         <div class="ng-contact__links ng-panel-reveal" style="--pi:3">
-          <a class="ng-btn ng-btn--primary" href="${esc(identity.resumeUrl)}" download>GET RÉSUMÉ ↓</a>
-          <a class="ng-btn" href="${esc(identity.github)}" target="_blank" rel="noopener noreferrer">GITHUB ↗</a>
+          <a class="ng-btn ng-btn--primary" href="${esc(identity.github)}" target="_blank" rel="noopener noreferrer">GITHUB ↗</a>
           <a class="ng-btn" href="${esc(identity.linkedin)}" target="_blank" rel="noopener noreferrer">LINKEDIN ↗</a>
           <a class="ng-btn" href="${esc(identity.instagram)}" target="_blank" rel="noopener noreferrer">INSTAGRAM ↗</a>
         </div>

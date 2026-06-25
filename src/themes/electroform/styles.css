@@ -243,22 +243,6 @@
   }
 }
 
-[data-theme='electroform'] .ef-top__cv {
-  color: var(--ef-lime);
-  text-decoration: none;
-  border: 1px solid rgba(204, 255, 0, 0.4);
-  border-radius: 999px;
-  padding: 6px 13px;
-  transition:
-    background var(--dur-base) ease,
-    box-shadow var(--dur-base) ease;
-}
-
-[data-theme='electroform'] .ef-top__cv:hover {
-  background: rgba(204, 255, 0, 0.12);
-  box-shadow: 0 0 18px rgba(204, 255, 0, 0.18);
-}
-
 /* --- dot nav (right edge) --------------------------------------------------------- */
 
 [data-theme='electroform'] .ef-nav {
@@ -911,6 +895,111 @@
 [data-theme='electroform'] .ef-exp__projects {
   margin-top: 32px;
   border-top: 1px solid var(--ef-line);
+}
+
+/* --- redaction (banking-confidential deployments) ------------------------------------------------- */
+
+/* seal note under the entry highlights — short mono line in this theme's voice */
+[data-theme='electroform'] .ef-exp__sealnote {
+  margin-top: 22px;
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  max-width: 72ch;
+  font-family: var(--ef-mono);
+  font-size: 12px;
+  font-weight: 450;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+  color: var(--ef-dim);
+}
+
+[data-theme='electroform'] .ef-exp__sealtag {
+  flex: none;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: var(--ef-lime);
+  border: 1px solid rgba(204, 255, 0, 0.45);
+  border-radius: 4px;
+}
+
+/* expanded body of a redacted row: molten chrome strips + acid-lime caption,
+   standing in for the (now-empty) points + stack */
+[data-theme='electroform'] .ef-redact {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+[data-theme='electroform'] .ef-redact__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 72ch;
+}
+
+/* each bar = poured liquid-chrome with an acid-lime leading edge; the chrome
+   sheen drifts across it (degrades to a static fill under reduced-motion) */
+[data-theme='electroform'] .ef-redact__bar {
+  position: relative;
+  display: block;
+  width: var(--w, 80%);
+  height: 13px;
+  border-radius: 999px;
+  border-left: 2px solid var(--ef-lime);
+  background:
+    linear-gradient(
+      100deg,
+      rgba(204, 255, 0, 0.16) 0%,
+      rgba(204, 255, 0, 0) 7%
+    ),
+    var(--ef-chrome);
+  background-size:
+    100% 100%,
+    220% 100%;
+  background-position:
+    0 0,
+    0 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  /* knock the molten silver down so it reads as withheld, not as content */
+  opacity: 0.5;
+  animation: ef-redact-shimmer 4.2s var(--ease-in-out-cubic) infinite;
+}
+
+[data-theme='electroform'] .ef-redact__bar--short {
+  height: 11px;
+  opacity: 0.38;
+  animation-duration: 5.1s;
+}
+
+@keyframes ef-redact-shimmer {
+  0%,
+  100% {
+    background-position:
+      0 0,
+      -60% 0;
+  }
+  50% {
+    background-position:
+      0 0,
+      160% 0;
+  }
+}
+
+[data-theme='electroform'] .ef-redact__caption {
+  font-family: var(--ef-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  color: var(--ef-lime);
+}
+
+[data-theme='electroform'] .ef-redact__caption span {
+  margin-right: 8px;
+  opacity: 0.7;
 }
 
 /* --- expandable rows (experience + projects) ------------------------------------------------------ */
@@ -1742,8 +1831,17 @@
 
   [data-theme='electroform'] .ef-marquee__track,
   [data-theme='electroform'] .ef-top__avail i,
-  [data-theme='electroform'] .ef-hero__scrollline::after {
+  [data-theme='electroform'] .ef-hero__scrollline::after,
+  [data-theme='electroform'] .ef-redact__bar {
     animation: none !important;
+  }
+
+  /* freeze the shimmer at a centered chrome fill so the redacted strips stay
+     fully legible (still clearly molten-chrome + lime-edged, just static) */
+  [data-theme='electroform'] .ef-redact__bar {
+    background-position:
+      0 0,
+      50% 0;
   }
 
   /* A frozen marquee would clip every skill past the first viewport-width —

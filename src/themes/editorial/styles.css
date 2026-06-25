@@ -1286,6 +1286,92 @@
   color: var(--ed-ink-faint);
 }
 
+/* --- experience: redacted dossiers (banking confidentiality) ------------------------------------------------
+   Titles + tags stay; note + stack are spiked into solid censor bars. The bar
+   reuses the .ed-redact ink primitive, but this --sealed variant is permanent:
+   no hover/focus lift (there is nothing under it to reveal). The embargo stamp
+   and a footnote carry the withholding in the magazine's voice; the slot's
+   accessible name (set on the wrapping group + sr-only line) tells AT users the
+   particulars are withheld. */
+
+/* Screen-reader-only — conveys the withholding without printing the bar text. */
+[data-theme='editorial'] .ed-sronly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* A struck-through press bar — solid ink, never lifts. The faint top/bottom
+   hairlines read as the deckle of a pasted-over correction slip. */
+[data-theme='editorial'] .ed-redact--sealed {
+  display: inline-block;
+  max-width: 100%;
+  background: var(--ed-ink);
+  color: transparent;
+  border-radius: 1px;
+  box-shadow:
+    inset 0 1px 0 rgba(244, 241, 236, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  /* no transition / no hover — the sealed variant must not be defeatable */
+  transition: none;
+  user-select: none;
+}
+
+[data-theme='editorial'] .ed-filed__note--redacted {
+  margin-top: 2px;
+}
+
+[data-theme='editorial'] .ed-filed__stack--redacted {
+  margin-top: 7px;
+}
+
+/* The note bar runs a touch heavier than the stack bar — mirrors the two
+   real text weights it replaces, so the rhythm of the column survives. */
+[data-theme='editorial'] .ed-filed__note--redacted .ed-redact--sealed {
+  height: 0.95em;
+  vertical-align: -0.16em;
+}
+
+[data-theme='editorial'] .ed-filed__stack--redacted .ed-redact--sealed {
+  height: 0.78em;
+  vertical-align: -0.12em;
+  background: var(--ed-ink-soft);
+}
+
+/* WITHHELD — UNDER EMBARGO stamp, slammed into the dossier head, vermilion. */
+[data-theme='editorial'] .ed-filed__embargo {
+  display: inline-block;
+  margin-left: 12px;
+  padding: 3px 9px;
+  border: 1.5px solid var(--ed-verm);
+  border-radius: 2px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ed-verm-ink);
+  background: var(--ed-paper);
+  transform: rotate(-2.4deg);
+  vertical-align: 0.1em;
+}
+
+/* The withholding, set as an editorial footnote under the column. */
+[data-theme='editorial'] .ed-filed__footnote {
+  margin-top: 6px;
+  max-width: 64ch;
+  font-family: var(--ed-serif);
+  font-style: italic;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ed-ink-faint);
+}
+
 /* --- projects --------------------------------------------------------------------------------------------- */
 
 [data-theme='editorial'] .ed-projfeats {
@@ -1899,33 +1985,6 @@
   gap: clamp(18px, 2.5vw, 36px);
 }
 
-/* the vermilion stamp */
-[data-theme='editorial'] .ed-stamp {
-  display: inline-block;
-  padding: 14px 26px;
-  border: 2px solid var(--ed-verm);
-  outline: 1px solid var(--ed-verm);
-  outline-offset: 3px;
-  border-radius: 2px;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--ed-verm-ink);
-  transform: rotate(-1.6deg);
-  transition:
-    background-color var(--dur-base) ease,
-    color var(--dur-base) ease,
-    transform var(--dur-base) var(--ease-out-back);
-}
-
-[data-theme='editorial'] .ed-stamp:hover {
-  background: var(--ed-verm-ink);
-  color: var(--ed-paper);
-  transform: rotate(0deg);
-}
-
 [data-theme='editorial'] .ed-colophon__lab {
   font-family: var(--ed-serif);
   font-style: italic;
@@ -2378,6 +2437,17 @@
 [data-theme='editorial'] .ed.is-static .ed-redact,
 [data-theme='editorial'] .ed.is-static .ed-redact a {
   transition: none;
+}
+
+/* Reduced motion: the sealed censor bars stay solid ink and fully legible —
+   the redaction must read regardless of the motion preference. */
+[data-theme='editorial'] .ed.is-static .ed-redact--sealed {
+  background: var(--ed-ink);
+  color: transparent;
+}
+
+[data-theme='editorial'] .ed.is-static .ed-filed__stack--redacted .ed-redact--sealed {
+  background: var(--ed-ink-soft);
 }
 
 [data-theme='editorial'] .ed.is-static .ed-floatrule {

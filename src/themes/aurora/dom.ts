@@ -257,8 +257,6 @@ function hero(content: SiteContent): string {
       <div class="au-fan au-intro" style="--d:440ms" aria-hidden="true">${fan}</div>
       <div class="au-hero__actions au-intro" style="--d:560ms">
         <a class="au-hero__action" href="#about" data-nav>Begin the reading</a>
-        <span class="au-hero__sep" aria-hidden="true">✦</span>
-        <a class="au-hero__action" href="${identity.resumeUrl}" download>R&eacute;sum&eacute; <span aria-hidden="true">↓</span></a>
       </div>
       <div class="au-hero__cue" aria-hidden="true">
         <span class="au-caps">scroll</span>
@@ -318,15 +316,30 @@ function experience(content: SiteContent): string {
   const entries = content.experience
     .map((e, i) => {
       const highlights = e.highlights.map((h) => `<li>${h}</li>`).join('')
+      // Veiled deployments keep their name (a title) but wear a small frosted
+      // seal glyph so it reads as "detail withheld", not merely a tag.
+      const veiled = e.redactionNote ? ' au-chip--veiled' : ''
       const chips = e.projects
         ? `<ul class="au-chips" aria-label="Selected projects at ${e.company}">
             ${e.projects
               .map(
                 (p) =>
-                  `<li class="au-chip au-chip--gold" title="${p.tag}">${p.name}</li>`,
+                  `<li class="au-chip au-chip--gold${p.redacted ? veiled : ''}" title="${p.tag}">${
+                    p.redacted
+                      ? '<span class="au-chip__seal" aria-hidden="true">✦</span>'
+                      : ''
+                  }${p.name}</li>`,
               )
               .join('')}
           </ul>`
+        : ''
+      // A veiled note in the theme's voice: the technical readings stay sealed.
+      // The decorative wax-seal glyph is aria-hidden; the note text is real.
+      const sealed = e.redactionNote
+        ? `<p class="au-exp__seal au-reveal" role="note">
+            <span class="au-exp__seal-glyph" aria-hidden="true">✦</span>
+            <span class="au-exp__seal-text"><em>Kept under seal.</em> ${e.redactionNote}</span>
+          </p>`
         : ''
       return `
         <li class="au-exp__item au-reveal" style="--d:${i * 90}ms">
@@ -338,6 +351,7 @@ function experience(content: SiteContent): string {
             <p class="au-exp__summary">${e.summary}</p>
             <ul class="au-exp__highlights">${highlights}</ul>
             ${chips}
+            ${sealed}
           </article>
         </li>`
     })
@@ -536,7 +550,6 @@ function contact(content: SiteContent): string {
       <p class="au-contact__blurb au-reveal" style="--d:100ms">${c.blurb}</p>
       <a class="au-contact__email au-reveal" style="--d:200ms" href="mailto:${identity.email}">${identity.email}</a>
       <div class="au-contact__row au-reveal" style="--d:300ms">
-        <a class="au-btn" href="${identity.resumeUrl}" download>Draw my r&eacute;sum&eacute; <span aria-hidden="true">↓</span></a>
         <a class="au-contact__link" href="${identity.github}" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         <a class="au-contact__link" href="${identity.linkedin}" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
         <a class="au-contact__link" href="${identity.instagram}" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a>

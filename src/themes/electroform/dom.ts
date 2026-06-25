@@ -44,7 +44,6 @@ export function buildElectroformDom(content: SiteContent): ElectroformDom {
       <div class="ef-top__meta">
         <span class="ef-top__loc">${identity.location.toUpperCase()} — 12.97°N / 77.59°E</span>
         <span class="ef-top__avail"><i aria-hidden="true"></i>OPEN TO BUILD</span>
-        <a class="ef-top__cv" href="${identity.resumeUrl}" download data-flash>CV ↓</a>
       </div>
     </header>
 
@@ -239,6 +238,11 @@ function experience(content: SiteContent): string {
             <ul class="ef-exp__highlights">
               ${e.highlights.map((h) => `<li>${h}</li>`).join('')}
             </ul>
+            ${
+              e.redactionNote
+                ? `<p class="ef-exp__sealnote"><span class="ef-exp__sealtag" aria-hidden="true">SEALED</span>${e.redactionNote}</p>`
+                : ''
+            }
             ${e.projects ? expProjects(e.projects, i) : ''}
           </li>`,
           )
@@ -266,8 +270,20 @@ function expProjects(
           </button>
           <div class="ef-expand" id="${bodyId}">
             <div class="ef-expand__inner">
-              <ul class="ef-points">${p.points.map((pt) => `<li>${pt}</li>`).join('')}</ul>
-              <ul class="ef-chips" aria-label="Stack">${p.stack.map((s) => `<li>${s}</li>`).join('')}</ul>
+              ${
+                p.redacted
+                  ? `<div class="ef-redact" role="group" aria-label="Technical details withheld under banking confidentiality">
+                <div class="ef-redact__bars" aria-hidden="true">
+                  <span class="ef-redact__bar" style="--w:86%"></span>
+                  <span class="ef-redact__bar" style="--w:72%"></span>
+                  <span class="ef-redact__bar" style="--w:91%"></span>
+                  <span class="ef-redact__bar ef-redact__bar--short" style="--w:34%"></span>
+                </div>
+                <p class="ef-redact__caption"><span aria-hidden="true">▚</span> CLASSIFIED — DETAILS UNDER NDA</p>
+              </div>`
+                  : `<ul class="ef-points">${p.points.map((pt) => `<li>${pt}</li>`).join('')}</ul>
+              <ul class="ef-chips" aria-label="Stack">${p.stack.map((s) => `<li>${s}</li>`).join('')}</ul>`
+              }
             </div>
           </div>
         </li>`
@@ -438,7 +454,6 @@ function contactSection(content: SiteContent): string {
       <p class="ef-contact__blurb ef-reveal" style="--i:1">${contact.blurb}</p>
       <a class="ef-contact__email ef-reveal" style="--i:2" href="mailto:${identity.email}" data-flash data-speed="0.97">${identity.email.replace('@', '@<wbr>')}</a>
       <div class="ef-contact__actions ef-reveal" style="--i:3">
-        <a class="ef-btn ef-btn--lime" href="${identity.resumeUrl}" download data-flash>DOWNLOAD RÉSUMÉ</a>
         <a class="ef-btn" href="${identity.github}" target="_blank" rel="noopener noreferrer" data-flash>GITHUB ↗</a>
         <a class="ef-btn" href="${identity.linkedin}" target="_blank" rel="noopener noreferrer" data-flash>LINKEDIN ↗</a>
         <a class="ef-btn" href="${identity.instagram}" target="_blank" rel="noopener noreferrer" data-flash>INSTAGRAM ↗</a>

@@ -204,7 +204,6 @@ class LabApp {
           <nav aria-label="Lab links">
             <a href="mailto:${identity.email}">${identity.email}</a>
             <a href="${identity.github}" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="${identity.resumeUrl}" download>Resume (PDF)</a>
             <a href="/">Return to portfolio</a>
           </nav>
           <span>&copy; 2026 ${identity.name}</span>

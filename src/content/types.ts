@@ -56,6 +56,13 @@ export interface ExperienceProject {
   tag: string
   stack: string[]
   points: string[]
+  /**
+   * Technical detail withheld. When true, `stack` and `points` are redacted at
+   * the data layer (left empty here so the specifics never reach page source)
+   * and each theme renders its own in-place redaction treatment over the slot.
+   * The project `name` and `tag` are deliberately kept — titles, not internals.
+   */
+  redacted?: boolean
 }
 
 export interface ExperienceEntry {
@@ -66,6 +73,11 @@ export interface ExperienceEntry {
   summary: string
   highlights: string[]
   projects?: ExperienceProject[]
+  /**
+   * Present when this entry's embedded deployment details are withheld. Themes
+   * surface it as a short note/stamp beside the redacted deployments.
+   */
+  redactionNote?: string
 }
 
 export type ProjectKind = 'open-source' | 'platform'

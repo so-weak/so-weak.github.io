@@ -312,8 +312,12 @@
   min-width: 0;
 }
 
+/* With the résumé seal gone the brand sits left and the room links settle to
+   the right edge where the seal used to hang — the 2-part masthead stays
+   balanced. (Narrow viewports keep their natural left-to-right scroll start.) */
 [data-theme='vangogh'] .vg-mast__nav ul {
   display: flex;
+  justify-content: flex-end;
   gap: clamp(8px, 1.6vw, 22px);
   overflow-x: auto;
   scrollbar-width: none;
@@ -360,56 +364,6 @@
 
 [data-theme='vangogh'] .vg-mast__nav a.is-active .vg-mast__label {
   color: var(--vg-yellow);
-}
-
-/* Wax-seal résumé button — pressed vermilion with the monogram. */
-[data-theme='vangogh'] .vg-seal {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-[data-theme='vangogh'] .vg-seal__wax {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 47% 53% 50% 50% / 52% 48% 54% 46%;
-  background:
-    radial-gradient(circle at 32% 28%, #ef7a52 0 18%, transparent 42%),
-    radial-gradient(circle at 70% 75%, #8e2f14 0 30%, transparent 60%),
-    var(--vg-verm);
-  box-shadow:
-    inset 0 2px 5px rgba(255, 200, 160, 0.5),
-    inset 0 -3px 6px rgba(60, 12, 0, 0.6),
-    0 4px 14px rgba(2, 6, 18, 0.6);
-  font-family: var(--vg-display);
-  font-weight: 640;
-  font-size: 0.82rem;
-  letter-spacing: 0.04em;
-  color: #ffe9d6; /* embossed monogram on wax — decorative, label carries meaning */
-  transition: transform var(--dur-base) var(--ease-out-back);
-}
-
-[data-theme='vangogh'] .vg-seal__word {
-  font-size: var(--step--1);
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--vg-ivory-soft);
-  border-bottom: 1px solid transparent;
-  transition: color var(--dur-fast) ease, border-color var(--dur-fast) ease;
-}
-
-[data-theme='vangogh'] .vg-seal:hover .vg-seal__wax {
-  transform: rotate(-8deg) scale(1.06);
-}
-
-[data-theme='vangogh'] .vg-seal:hover .vg-seal__word {
-  color: var(--vg-ivory);
-  border-bottom-color: var(--vg-ochre);
 }
 
 /* --- plaque system: engraved brass museum labels ---------------------------------------- */
@@ -631,6 +585,123 @@
   color: var(--vg-brass-ink-soft);
 }
 
+/* --- withheld deployment: a canvas turned to the wall on the brass plaque ----
+   The HDFC deployments keep their engraved title (name + tag) but their stack
+   and metrics are lent away under banking confidentiality. In place of the
+   chipnote + chipstack we hang a small canvas turned to face the wall —
+   stretcher bars showing, stamped PRIVATE COLLECTION in the same vermilion wax
+   as the writing room's UNFINISHED stamp — under a brass line that says the
+   detail is on loan. The whole region is aria-labelled; the painting is
+   aria-hidden decoration. */
+[data-theme='vangogh'] .vg-plaque--withheld {
+  gap: 3px;
+}
+
+[data-theme='vangogh'] .vg-withheld {
+  display: block;
+  margin-top: 8px;
+}
+
+/* The raw back of a stretched canvas, turned in — echoes .vg-study__back. */
+[data-theme='vangogh'] .vg-withheld__back {
+  position: relative;
+  display: block;
+  height: 46px;
+  border-radius: 2px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(60, 44, 22, 0.18) 0 2px,
+      transparent 2px 5px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(60, 44, 22, 0.14) 0 2px,
+      transparent 2px 5px
+    ),
+    linear-gradient(150deg, #b89d72, #97794e);
+  border: 5px solid #6e552f; /* the stretcher's outer frame */
+  box-shadow:
+    inset 0 0 14px rgba(40, 28, 8, 0.5),
+    0 4px 12px -6px rgba(2, 6, 18, 0.7);
+  overflow: hidden;
+}
+
+[data-theme='vangogh'] .vg-withheld__bar {
+  position: absolute;
+  background: linear-gradient(180deg, #8a6e42, #6e552f);
+  box-shadow: 0 2px 6px rgba(40, 28, 8, 0.55);
+}
+
+[data-theme='vangogh'] .vg-withheld__bar--h {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 9px;
+  transform: translateY(-50%);
+}
+
+[data-theme='vangogh'] .vg-withheld__bar--v {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 9px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #8a6e42, #6e552f);
+}
+
+/* The wax stamp pressed across the back — same vermilion seal idiom as the
+   writing room's UNFINISHED, here reading PRIVATE COLLECTION. */
+[data-theme='vangogh'] .vg-withheld__stamp {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3px 8px;
+  margin: auto;
+  width: max-content;
+  height: max-content;
+  border: 1px dashed rgba(255, 220, 190, 0.7);
+  border-radius: 2px;
+  background: rgba(150, 32, 8, 0.9);
+  font-family: var(--vg-sans);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  line-height: 1;
+  color: #ffe9d6;
+  box-shadow: 0 3px 10px -4px rgba(2, 6, 18, 0.7);
+  /* the stamp lands at a slight angle and settles, like pressed wax */
+  transform: rotate(-7deg);
+  animation: vg-stamp-press 560ms var(--ease-out-back) both;
+}
+
+@keyframes vg-stamp-press {
+  0% {
+    opacity: 0;
+    transform: rotate(-7deg) scale(1.35);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-7deg) scale(1);
+  }
+}
+
+/* The brass line under the turned canvas — engraved, in the plaque's hand. */
+[data-theme='vangogh'] .vg-withheld__line {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--vg-display);
+  font-style: italic;
+  font-variation-settings: 'opsz' 14;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--vg-brass-ink-soft);
+}
+
 [data-theme='vangogh'] a.vg-plaque--link {
   display: inline-block;
   padding: 12px 20px;
@@ -656,30 +727,6 @@
   box-shadow: var(--vg-shadow-soft);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-}
-
-/* --- buttons --------------------------------------------------------------------------------- */
-
-[data-theme='vangogh'] .vg-btn {
-  display: inline-block;
-  padding: 13px 26px;
-  border-radius: 4px;
-  background: var(--vg-yellow);
-  color: #241b05; /* 9.8:1 on chrome yellow */
-  font-weight: 700;
-  font-size: var(--step--1);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 248, 220, 0.7),
-    0 8px 22px -10px rgba(245, 200, 66, 0.55);
-  transition: transform var(--dur-base) var(--ease-out-back), filter var(--dur-fast) ease;
-}
-
-[data-theme='vangogh'] .vg-btn:hover {
-  transform: translateY(-3px);
-  filter: brightness(1.05);
 }
 
 /* --- layout shell ------------------------------------------------------------------------------ */
@@ -1116,6 +1163,19 @@
   font-size: clamp(1.3rem, 2vw, 1.6rem);
   line-height: 1.3;
   text-shadow: 0 1px 16px rgba(5, 9, 24, 0.8);
+}
+
+/* The withholding note — a letter-to-Theo in the painter's own hand, written
+   in the margin of the room's checklist (inside the panel, beneath the turned
+   canvases). It sits on the night-glass wall, so it carries the brighter ochre
+   ink of the hand without the sky halo. */
+[data-theme='vangogh'] .vg-room__withheldnote {
+  --rot: -1.4deg;
+  margin: 22px 0 2px clamp(6px, 2.5vw, 32px);
+  max-width: 46ch;
+  font-size: clamp(1.15rem, 1.7vw, 1.4rem);
+  line-height: 1.32;
+  color: var(--vg-ochre);
 }
 
 [data-theme='vangogh'] .vg-studies {
@@ -1891,16 +1951,6 @@
     margin-right: auto;
   }
 
-  [data-theme='vangogh'] .vg-seal__word {
-    display: none;
-  }
-
-  [data-theme='vangogh'] .vg-seal__wax {
-    width: 36px;
-    height: 36px;
-    font-size: 0.72rem;
-  }
-
   [data-theme='vangogh'] .vg-hero {
     padding-top: 130px;
   }
@@ -1991,9 +2041,7 @@
 
   [data-theme='vangogh'] .vg-salon__item:hover .vg-frame,
   [data-theme='vangogh'] .vg-study__frame:hover,
-  [data-theme='vangogh'] .vg-seal:hover .vg-seal__wax,
-  [data-theme='vangogh'] a.vg-plaque--link:hover,
-  [data-theme='vangogh'] .vg-btn:hover {
+  [data-theme='vangogh'] a.vg-plaque--link:hover {
     transform: none;
   }
 
@@ -2004,5 +2052,13 @@
   [data-theme='vangogh'] .vg-toast {
     transition: none;
     transform: translate(-50%, 0);
+  }
+
+  /* The PRIVATE COLLECTION wax stamp lands settled and opaque — no press —
+     so reduced-motion users still clearly read the withholding. */
+  [data-theme='vangogh'] .vg-withheld__stamp {
+    animation: none;
+    opacity: 1;
+    transform: rotate(-7deg) scale(1);
   }
 }

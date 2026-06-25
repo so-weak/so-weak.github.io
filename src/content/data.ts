@@ -93,116 +93,23 @@ export const siteContent: SiteContent = {
         'Silver Star Award for AI technical excellence, presented to the CEO & Board.',
         'Led teams of up to 10 engineers across platform, QA, and AI strategy workstreams.',
       ],
+      // Deployment internals (stacks + metrics) are withheld at the data layer:
+      // the specifics never reach page source. Titles and tags are kept; each
+      // theme renders its own redaction treatment over the empty slot.
+      redactionNote:
+        'Stacks and metrics for these deployments are withheld under banking confidentiality.',
       projects: [
-        {
-          name: 'AI Fabric: TradeOps',
-          tag: 'LLM Document Intelligence',
-          stack: [
-            'Python',
-            'FastAPI',
-            'Gemini 2.5 Flash',
-            'Vertex AI',
-            'LiteLLM',
-            'LayoutLM',
-            'BERT',
-          ],
-          points: [
-            'The bank’s first production Python AI platform: document classification and extraction for 800+ users pan-India at 97% accuracy, cutting manual processing by 90%.',
-            'Designed a pluggable LLM interface that eliminates vendor lock-in, plus a centralized prompt hub and an 11-API feedback loop.',
-            'Held the line at 98%+ test coverage while leading a team of 4 engineers.',
-          ],
-        },
-        {
-          name: 'Cheque Processing: Clearing House',
-          tag: 'High-Throughput Document AI',
-          stack: ['Gemini 1.5/2.5', 'LayoutLM', 'Donut', 'OpenCV'],
-          points: [
-            'Solely owned: 99%+ extraction accuracy at 10+ cheques per second.',
-            'Built a validation harness over 700K+ ICR reject records.',
-            'Projected to halve operations time for cheque clearing.',
-          ],
-        },
-        {
-          name: 'VerifyX',
-          tag: 'RAG Verification Framework',
-          stack: ['ReactJS', 'FastAPI', 'Gemini', 'CAG agent'],
-          points: [
-            'Audit framework spanning VKYC and ECCS with a chat agent answering over 27,000+ documents.',
-            'Demoed live to the CEO & Board.',
-          ],
-        },
-        {
-          name: 'Narad AI & VERA',
-          tag: 'Agentic Frontends',
-          stack: ['ReactJS MFE', 'ThreeJS'],
-          points: [
-            'Email-agent frontend shipped at 98%+ test coverage.',
-            'Voice-to-voice interface with real-time 3D visualizations.',
-          ],
-        },
-        {
-          name: 'AI Banking Platform',
-          tag: 'LangGraph Orchestration',
-          stack: ['LangGraph', 'ReactJS MFE', 'FastAPI'],
-          points: [
-            'Skills-oriented agentic platform with session management and MFA.',
-            'Aqua AI chat micro-frontend embedded across banking surfaces.',
-          ],
-        },
-        {
-          name: 'RAG-as-a-Service',
-          tag: 'Retrieval Platform',
-          stack: ['FAISS', 'BM25', 'Cohere reranker', 'BGE reranker'],
-          points: [
-            'Hybrid FAISS + BM25 retrieval with Cohere/BGE reranking.',
-            'Cut hallucinations 40–60% across 5 downstream projects.',
-          ],
-        },
-        {
-          name: 'Pay-by-Face & LOOK',
-          tag: 'Biometrics',
-          stack: ['ArcFace', 'FaceNet', 'InsightFace', 'CNN anti-spoofing'],
-          points: [
-            'Benchmarked 7 face-embedding models; shipped sub-100ms recognition at 99.2% accuracy under production load.',
-            'Anti-spoofing CNN with FAR below 0.1%.',
-            'Earned the Silver Star Award.',
-          ],
-        },
-        {
-          name: 'Vaani & Pay-by-Voice',
-          tag: 'Voice AI',
-          stack: ['Indic Parler-TTS', 'Wav2Vec2', 'Whisper', 'ECAPA-TDNN'],
-          points: [
-            'Indic text-to-speech plus Wav2Vec2/Whisper speech recognition.',
-            'ECAPA-TDNN speaker verification at 97% accuracy.',
-          ],
-        },
-        {
-          name: 'Signature Verification',
-          tag: 'Document Forensics',
-          stack: ['YOLOv8', 'Pix2Pix GAN', 'Embedding matching'],
-          points: [
-            'YOLOv8 signature detection, Pix2Pix GAN cleanup, and embedding-based matching in one pipeline.',
-          ],
-        },
-        {
-          name: 'Ankan',
-          tag: 'Annotation Platform',
-          stack: ['Active learning', 'Python', 'ReactJS'],
-          points: [
-            'Active-learning labelling tool used by 100+ users across 10,000+ images.',
-            'Adopted as the bank-wide annotation standard.',
-          ],
-        },
-        {
-          name: 'Pareekshana & AI OS',
-          tag: 'QA & Strategy',
-          stack: ['Python', 'CI/CD'],
-          points: [
-            'Redesigned the QA suite end to end; led up to 10 engineers.',
-            'Contributed to board-level AI strategy.',
-          ],
-        },
+        { name: 'AI Fabric: TradeOps', tag: 'LLM Document Intelligence', stack: [], points: [], redacted: true },
+        { name: 'Cheque Processing: Clearing House', tag: 'High-Throughput Document AI', stack: [], points: [], redacted: true },
+        { name: 'VerifyX', tag: 'RAG Verification Framework', stack: [], points: [], redacted: true },
+        { name: 'Narad AI & VERA', tag: 'Agentic Frontends', stack: [], points: [], redacted: true },
+        { name: 'AI Banking Platform', tag: 'LangGraph Orchestration', stack: [], points: [], redacted: true },
+        { name: 'RAG-as-a-Service', tag: 'Retrieval Platform', stack: [], points: [], redacted: true },
+        { name: 'Pay-by-Face & LOOK', tag: 'Biometrics', stack: [], points: [], redacted: true },
+        { name: 'Vaani & Pay-by-Voice', tag: 'Voice AI', stack: [], points: [], redacted: true },
+        { name: 'Signature Verification', tag: 'Document Forensics', stack: [], points: [], redacted: true },
+        { name: 'Ankan', tag: 'Annotation Platform', stack: [], points: [], redacted: true },
+        { name: 'Pareekshana & AI OS', tag: 'QA & Strategy', stack: [], points: [], redacted: true },
       ],
     },
     {

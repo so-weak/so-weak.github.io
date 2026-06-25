@@ -71,12 +71,6 @@ async function boot(): Promise<void> {
     identity: siteContent.identity,
   })
 
-  // Track CV downloads globally (all themes use <a download> anchors).
-  document.addEventListener('click', (e) => {
-    const a = (e.target as Element).closest<HTMLAnchorElement>('a[download]')
-    if (a) trackEvent('cv_download', { href: a.href })
-  })
-
   ticker.start()
 
   try {

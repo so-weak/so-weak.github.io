@@ -205,7 +205,7 @@ function masthead(content: SiteContent, city: string): string {
       </nav>
       <div class="ed-masthead__issue">
         <span>VOL. 04 — ${esc(city).toUpperCase()}</span>
-        <span>THE PRODUCTION AI ISSUE · <a href="${esc(content.identity.resumeUrl)}" download>RÉSUMÉ ↓</a></span>
+        <span>THE PRODUCTION AI ISSUE</span>
       </div>
     </header>
   `
@@ -416,11 +416,31 @@ function experience(content: SiteContent): string {
       const filed = e.projects?.length
         ? `
           <div class="ed-filedwrap ed-reveal">
-            <h4 class="ed-filed__head">Filed under № ${pad(i + 1)} — ${e.projects.length} dossiers</h4>
+            <h4 class="ed-filed__head">
+              Filed under № ${pad(i + 1)} — ${e.projects.length} dossiers
+              ${e.redactionNote ? `<span class="ed-filed__embargo" aria-hidden="true">Withheld — under embargo</span>` : ''}
+            </h4>
             <ol class="ed-filed">
               ${e.projects
                 .map(
-                  (p, j) => `
+                  (p, j) =>
+                    p.redacted
+                      ? `
+                    <li style="--i:${j}">
+                      <span class="ed-filed__no">${pad(j + 1)}</span>
+                      <div role="group" aria-label="${esc(p.name)} — technical details withheld under banking confidentiality">
+                        <span class="ed-filed__name">${esc(p.name)}</span>
+                        <span class="ed-filed__tag">${esc(p.tag).toUpperCase()}</span>
+                        <p class="ed-filed__note ed-filed__note--redacted">
+                          <span class="ed-redact ed-redact--sealed" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </p>
+                        <p class="ed-filed__stack ed-filed__stack--redacted">
+                          <span class="ed-redact ed-redact--sealed" aria-hidden="true">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                          <span class="ed-sronly">Technical details withheld under banking confidentiality.</span>
+                        </p>
+                      </div>
+                    </li>`
+                      : `
                     <li style="--i:${j}">
                       <span class="ed-filed__no">${pad(j + 1)}</span>
                       <div>
@@ -433,6 +453,7 @@ function experience(content: SiteContent): string {
                 )
                 .join('')}
             </ol>
+            ${e.redactionNote ? `<p class="ed-filed__footnote">† ${esc(e.redactionNote)} The titles run; the particulars are spiked.</p>` : ''}
           </div>`
         : ''
 
@@ -683,7 +704,6 @@ function colophon(content: SiteContent): string {
       </a>
       <p class="ed-colophon__blurb ed-reveal">${esc(contact.blurb)}</p>
       <div class="ed-colophon__actions ed-reveal">
-        <a class="ed-stamp" href="${esc(identity.resumeUrl)}" download>Download résumé — PDF</a>
         <a class="ed-link-verm" href="${esc(identity.github)}" target="_blank" rel="noopener noreferrer">GitHub<span aria-hidden="true"> ↗</span></a>
         <a class="ed-link-verm" href="${esc(identity.linkedin)}" target="_blank" rel="noopener noreferrer">LinkedIn<span aria-hidden="true"> ↗</span></a>
         <a class="ed-link-verm" href="${esc(identity.instagram)}" target="_blank" rel="noopener noreferrer">Instagram<span aria-hidden="true"> ↗</span></a>

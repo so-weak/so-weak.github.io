@@ -6,8 +6,8 @@
  * star knots, stirred by the cursor like a brush through wet oil. Scroll
  * walks the palette through chapters — night sky → wheat-field ochres →
  * café-terrace yellows → the calmest night — while the DOM hangs the work
- * as a museum: gallery masthead with ROOM links and a wax-seal résumé,
- * gilt salon frames with brass plaques, a wooden palette of paint daubs,
+ * as a museum: gallery masthead with ROOM links, gilt salon frames with
+ * brass plaques, a wooden palette of paint daubs,
  * a medals cabinet, unfinished canvases turned to the wall, and a
  * guestbook signed in a handwritten Caveat line.
  *
